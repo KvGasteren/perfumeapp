@@ -3,18 +3,14 @@ import { ingredientAllergens, ingredients } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
-
-const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
-  allergenId: z.coerce.number().int().positive(),
-});
+import { parseIngredientAllergenIds } from "@/lib/params";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string; allergenId: string } }
+  { params }: { params: Promise<{ id: string; allergenId: string }> }
 ) {
   const ownerId = getOwnerId();
-  const { id, allergenId } = paramsSchema.parse(params);
+  const { id, allergenId } = await parseIngredientAllergenIds(params)
 
   // Optional: ensure the ingredient exists for clearer 404s
   const ing = await db.query.ingredients.findFirst({

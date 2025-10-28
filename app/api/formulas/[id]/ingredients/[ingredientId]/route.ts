@@ -1,20 +1,15 @@
 import { db } from "@/db";
 import { formulaIngredients, formulas } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
-
-const paramsSchema = z.object({
-  id: z.coerce.number().int().positive(),
-  ingredientId: z.coerce.number().int().positive(),
-});
+import { parseFormulaIngredientIds } from "@/lib/params";
 
 export async function DELETE(
   _req: Request,
-  { params }: { params: { id: string; ingredientId: string } }
+  { params }: { params: Promise<{ id: string; ingredientId: string } >}
 ) {
   const ownerId = getOwnerId();
-  const { id, ingredientId } = paramsSchema.parse(params);
+  const { id, ingredientId } = await parseFormulaIngredientIds(params)
 
   // Optional: clearer 404 if the formula doesn't exist for this owner
   const f = await db.query.formulas.findFirst({

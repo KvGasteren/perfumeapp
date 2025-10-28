@@ -3,8 +3,7 @@ import { formulas, formulaIngredients, ingredients } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
-
-const idParam = z.object({ id: z.coerce.number().int().positive() });
+import { parseId } from "@/lib/params";
 
 const upsertSchema = z.object({
   ingredientId: z.number().int().positive(),
@@ -13,10 +12,10 @@ const upsertSchema = z.object({
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id = await parseId(params)
 
   // Ensure the formula exists for this owner
   const formula = await db.query.formulas.findFirst({
@@ -46,10 +45,10 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id = await parseId(params)
   const { ingredientId, parts } = upsertSchema.parse(await req.json());
 
   // Guards
@@ -76,7 +75,11 @@ export async function POST(
       ownerId,
     })
     .onConflictDoUpdate({
-      target: [formulaIngredients.formulaId, formulaIngredients.ingredientId],
+      target: [
+        formulaIngredients.formulaId, 
+        formulaIngredients.ingredientId,
+        formulaIngredients.ownerId,
+      ],
       set: { parts },
     })
     .returning();

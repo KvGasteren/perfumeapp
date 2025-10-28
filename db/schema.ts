@@ -6,9 +6,9 @@ import {
   text,
   timestamp,
   primaryKey,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { uniqueIndex } from "drizzle-orm/pg-core";
 
 export const ingredients = pgTable("ingredient", {
   id: serial("id").primaryKey(),
@@ -30,9 +30,7 @@ export const ingredientAllergens = pgTable(
     concentration: real("concentration").notNull(),
     ownerId: text("owner_id").notNull().default("public"),
   },
-  (t) => ({
-    pk: primaryKey({ columns: [t.ingredientId, t.allergenId] }),
-  })
+  (t) => [primaryKey({ columns: [t.ingredientId, t.allergenId] })]
 );
 
 export const formulas = pgTable("formula", {
@@ -47,16 +45,16 @@ export const formulaIngredients = pgTable(
   "formula_ingredient",
   {
     id: serial("id").primaryKey(),
-    formulaId: integer("formula_id").notNull(),
-    ingredientId: integer("ingredient_id").notNull(),
+    formulaId: integer("formula_id").notNull().references(() => formulas.id, { onDelete: 'cascade', onUpdate: 'cascade'}),
+    ingredientId: integer("ingredient_id").notNull().references(() => ingredients.id, { onDelete: 'restrict', onUpdate: 'cascade'}),
     parts: real("parts").notNull(),
     ownerId: text("owner_id").notNull().default("public"),
   },
-  (t) => ({
+  (t) => [
     // Ensure only one row per (formula, ingredient)
-    uniqFormulaIngredient: uniqueIndex("uniq_formula_ingredient")
+    uniqueIndex("uniq_formula_ingredient")
       .on(t.formulaId, t.ingredientId, t.ownerId),
-  })
+  ]
 );
 
 // (Optional) relations for typed joins

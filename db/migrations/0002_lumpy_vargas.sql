@@ -1,0 +1,2 @@
+ALTER TABLE "formula_ingredient" ADD CONSTRAINT "formula_ingredient_formula_id_formula_id_fk" FOREIGN KEY ("formula_id") REFERENCES "public"."formula"("id") ON DELETE cascade ON UPDATE cascade;--> statement-breakpoint
+ALTER TABLE "formula_ingredient" ADD CONSTRAINT "formula_ingredient_ingredient_id_ingredient_id_fk" FOREIGN KEY ("ingredient_id") REFERENCES "public"."ingredient"("id") ON DELETE restrict ON UPDATE cascade;

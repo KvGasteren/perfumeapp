@@ -9,7 +9,7 @@ const createSchema = z.object({ name: z.string().min(1) });
 
 export async function GET() {
   const ownerId = getOwnerId();
-  const rows = await db.query.ingredients.findMany({
+  const rows = await db.query.formulas.findMany({
     where: eq(formulas.ownerId, ownerId),
     orderBy: (i: { name: any; }, { asc }: any) => [asc(i.name)],
   });

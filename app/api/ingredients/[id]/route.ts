@@ -3,13 +3,16 @@ import { ingredients, formulaIngredients } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
+import { parseId } from "@/lib/params";
 
-const idParam = z.object({ id: z.coerce.number().int().positive() });
 const patchSchema = z.object({ name: z.string().min(1) });
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id  = await parseId(params);
   const row = await db.query.ingredients.findFirst({
     where: and(eq(ingredients.id, id), eq(ingredients.ownerId, ownerId)),
   });
@@ -17,12 +20,16 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   return Response.json(row);
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id  = await parseId(params);
   const { name } = patchSchema.parse(await req.json());
 
-  const [row] = await db.update(ingredients)
+  const [row] = await db
+    .update(ingredients)
     .set({ name })
     .where(and(eq(ingredients.id, id), eq(ingredients.ownerId, ownerId)))
     .returning();
@@ -31,14 +38,23 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   return Response.json(row);
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  _: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id  = await parseId(params);
 
   // Guard: block deletion if used in any formula
-  const usage = await db.select().from(formulaIngredients).where(
-    and(eq(formulaIngredients.ingredientId, id), eq(formulaIngredients.ownerId, ownerId))
-  );
+  const usage = await db
+    .select()
+    .from(formulaIngredients)
+    .where(
+      and(
+        eq(formulaIngredients.ingredientId, id),
+        eq(formulaIngredients.ownerId, ownerId)
+      )
+    );
 
   if (usage.length > 0) {
     return Response.json(
@@ -47,7 +63,8 @@ export async function DELETE(_: Request, { params }: { params: { id: string } })
     );
   }
 
-  const [deleted] = await db.delete(ingredients)
+  const [deleted] = await db
+    .delete(ingredients)
     .where(and(eq(ingredients.id, id), eq(ingredients.ownerId, ownerId)))
     .returning();
 

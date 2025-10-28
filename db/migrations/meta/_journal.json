@@ -15,6 +15,13 @@
       "when": 1761650732657,
       "tag": "0001_wonderful_senator_kelly",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1761663062149,
+      "tag": "0002_lumpy_vargas",
+      "breakpoints": true
     }
   ]
 }

@@ -7,20 +7,19 @@ import {
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
-
-const idParam = z.object({ id: z.coerce.number().int().positive() });
+import { parseId } from "@/lib/params";
 
 const upsertSchema = z.object({
-  allergenId: z.number().int().positive(),
-  concentration: z.number().finite().nonnegative(),
+  allergenId: z.coerce.number().int().positive(),
+  concentration: z.coerce.number().nonnegative(),
 });
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id  = await parseId(params)
 
   // Ensure the ingredient exists for this owner
   const ing = await db.query.ingredients.findFirst({
@@ -50,10 +49,10 @@ export async function GET(
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise< { id: string }> }
 ) {
   const ownerId = getOwnerId();
-  const { id } = idParam.parse(params);
+  const id  = await parseId(params)
   const { allergenId, concentration } = upsertSchema.parse(await req.json());
 
   // Guard: ingredient must exist
