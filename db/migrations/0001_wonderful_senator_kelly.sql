@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "uniq_formula_ingredient" ON "formula_ingredient" USING btree ("formula_id","ingredient_id","owner_id");
