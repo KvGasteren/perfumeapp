@@ -1,15 +1,36 @@
-"use client";
-import PageHeader from "@/components/PageHeader";
-import { Button } from "@/components/ui/Button";
+// app/(routes)/formulas/[id]/page.tsx
+import { Formulas } from "@/services/formulas";
+import { Ingredients } from "@/services/ingredients";
+import { FormulaEditorClient } from "./_client";
+import { notFound } from "next/navigation";
 
-export default function FormulaDetailPage() {
+export const dynamic = "force-dynamic";
+
+export default async function FormulaDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  // 👇 unwrap the promise — this is what the error was about
+  const { id } = await params;
+  const formulaId = Number(id);
+
+  if (Number.isNaN(formulaId)) {
+    // if someone hits /formulas/foo
+    notFound();
+  }
+
+  const [formula, ingredientsInFormula, allIngredients] = await Promise.all([
+    Formulas.byId(formulaId),
+    Formulas.listIngredients(formulaId),
+    Ingredients.list(),
+  ]);
+
   return (
-    <div className="space-y-6">
-      <PageHeader title="Formula details" actions={<Button>Save</Button>} />
-      <div className="rounded-lg border bg-white p-4 text-sm text-neutral-500">
-        Coming next: composition editor (add/remove ingredients, parts),
-        allergen summary panel, guarded delete.
-      </div>
-    </div>
+    <FormulaEditorClient
+      formula={formula}
+      initialRows={ingredientsInFormula}
+      ingredientOptions={allIngredients}
+    />
   );
 }

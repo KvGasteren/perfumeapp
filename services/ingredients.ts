@@ -4,6 +4,7 @@ import type { Ingredient, AllergenLink } from "@/lib/zodSchemas";
 export const Ingredients = {
   list: () => api.get<Ingredient[]>("/api/ingredients"),
   byId: (id: number) => api.get<Ingredient>(`/api/ingredients/${id}`),
+  create: (payload: { name: string }) => api.post<Ingredient>("/api/ingredients", payload),
   update: (id: number, patch: Partial<Ingredient>) =>
     api.patch<Ingredient>(`/api/ingredients/${id}`, patch),
   remove: (id: number) => api.del(`/api/ingredients/${id}`),
