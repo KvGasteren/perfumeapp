@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// app/(routes)/formulas/[id]/_client.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -13,6 +14,22 @@ import type {
   Ingredient,
 } from "@/lib/zodSchemas";
 import { useRouter } from "next/navigation";
+
+// helper: fetch allergens for 1 ingredient
+async function fetchIngredientAllergens(ingredientId: number) {
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const res = await fetch(`${base}/api/ingredients/${ingredientId}/allergens`, {
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load allergens for ingredient ${ingredientId}`);
+  }
+  return (await res.json()) as Array<{
+    allergenId: number;
+    allergenName?: string;
+    concentration: number;
+  }>;
+}
 
 type Row = {
   ingredientId: number | "";
@@ -44,6 +61,14 @@ export function FormulaEditorClient({
   );
   const [saving, setSaving] = useState(false);
 
+  // NEW: cache of ingredient allergens
+  const [allergenCache, setAllergenCache] = useState<
+    Record<
+      number,
+      Array<{ allergenId: number; allergenName?: string; concentration: number }>
+    >
+  >({});
+
   const changedName = name.trim() !== formula.name.trim();
 
   function addRow() {
@@ -62,18 +87,15 @@ export function FormulaEditorClient({
   function removeRow(idx: number) {
     setRows((prev) => {
       const target = prev[idx];
-      // if it's a new row, just drop it
       if (!target._status || target._status === "new") {
         return prev.filter((_, i) => i !== idx);
       }
-      // mark existing row as deleted
       return prev.map((r, i) =>
         i === idx ? { ...r, _status: "deleted" } : r
       );
     });
   }
 
-  // so we can show ingredient names even when we only have an id
   // const ingredientMap = useMemo(() => {
   //   const m = new Map<number, string>();
   //   for (const ing of ingredientOptions) {
@@ -82,15 +104,88 @@ export function FormulaEditorClient({
   //   return m;
   // }, [ingredientOptions]);
 
+  // NEW: whenever rows change and we see a selected ingredient we don't have allergens for, fetch them
+  useEffect(() => {
+    (async () => {
+      for (const row of rows) {
+        if (
+          row._status === "deleted" ||
+          row.ingredientId === "" ||
+          typeof row.ingredientId !== "number"
+        ) {
+          continue;
+        }
+        const ingId = row.ingredientId;
+        if (!allergenCache[ingId]) {
+          try {
+            const data = await fetchIngredientAllergens(ingId);
+            setAllergenCache((prev) => ({ ...prev, [ingId]: data }));
+          } catch (e: any) {
+            // non-fatal, just toast
+            push({
+              title: "Could not load allergens",
+              description: e.message,
+            });
+          }
+        }
+      }
+    })();
+  }, [rows, allergenCache, push]);
+
+  // NEW: compute allergen summary
+  const allergenSummary = useMemo(() => {
+    // total parts of formula
+    const activeRows = rows.filter(
+      (r) => r._status !== "deleted" && r.ingredientId !== "" && r.parts !== ""
+    );
+    const totalParts = activeRows.reduce(
+      (sum, r) => sum + Number(r.parts),
+      0
+    );
+    if (!totalParts) return [];
+
+    // aggregate
+    const agg = new Map<
+      number,
+      { name: string; total: number }
+    >();
+
+    for (const r of activeRows) {
+      if (typeof r.ingredientId !== "number") continue;
+      const ingredientParts = Number(r.parts);
+      const share = ingredientParts / totalParts; // fraction of formula
+
+      const ingredientAllergens = allergenCache[r.ingredientId] ?? [];
+      for (const a of ingredientAllergens) {
+        const contribution = share * a.concentration; // assuming concentration is fraction of ingredient
+        const key = a.allergenId;
+        const label = a.allergenName ?? `Allergen ${a.allergenId}`;
+        const existing = agg.get(key);
+        if (existing) {
+          existing.total += contribution;
+        } else {
+          agg.set(key, { name: label, total: contribution });
+        }
+      }
+    }
+
+    // to array, sorted desc
+    return Array.from(agg.entries())
+      .map(([id, v]) => ({
+        id,
+        name: v.name,
+        total: v.total,
+      }))
+      .sort((a, b) => b.total - a.total);
+  }, [rows, allergenCache]);
+
   async function handleSave() {
     setSaving(true);
     try {
-      // 1) update formula name if needed
       if (changedName) {
         await Formulas.update(formula.id, { name: name.trim() });
       }
 
-      // 2) sync composition
       for (const row of rows) {
         if (row._status === "deleted" && typeof row.ingredientId === "number") {
           await Formulas.deleteIngredient(formula.id, row.ingredientId);
@@ -126,7 +221,6 @@ export function FormulaEditorClient({
       push({ title: "Deleted" });
       router.push("/formulas");
     } catch (e: any) {
-      // e.g. 422 from backend
       push({ title: "Cannot delete", description: e.message });
     }
   }
@@ -181,7 +275,7 @@ export function FormulaEditorClient({
                   <option value="">Select ingredient…</option>
                   {ingredientOptions.map((ing) => (
                     <option key={ing.id} value={ing.id}>
-                      { ing.name }
+                      {ing.name}
                     </option>
                   ))}
                 </select>
@@ -191,7 +285,9 @@ export function FormulaEditorClient({
                   className="w-28"
                   value={row.parts === "" ? "" : String(row.parts)}
                   onChange={(e) =>
-                    updateRow(idx, { parts: e.target.value === "" ? "" : Number(e.target.value) })
+                    updateRow(idx, {
+                      parts: e.target.value === "" ? "" : Number(e.target.value),
+                    })
                   }
                   placeholder="parts"
                 />
@@ -211,8 +307,30 @@ export function FormulaEditorClient({
         </div>
       </section>
 
-      {/* later: allergen summary panel */}
-      {/* <section className="rounded-lg border bg-white p-4">…</section> */}
+      {/* NEW: allergen summary panel */}
+      <section className="rounded-lg border bg-white p-4 space-y-3">
+        <h2 className="text-sm font-medium">Allergen summary</h2>
+        {allergenSummary.length === 0 ? (
+          <div className="text-sm text-neutral-500">
+            No allergen data available for this formula.
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {allergenSummary.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between text-sm"
+              >
+                <span>{a.name}</span>
+                {/* show as percentage with 2 decimals */}
+                <span className="font-mono text-neutral-700">
+                  {(a.total * 100).toFixed(2)}%
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
