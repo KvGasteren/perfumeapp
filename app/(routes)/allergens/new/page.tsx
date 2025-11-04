@@ -112,8 +112,8 @@ export default function NewAllergenClient() {
             onChange={(e) => setMaxConcentration(e.target.value)}
             placeholder="e.g. 0.0200"
           />
-          <p className="mt-1 text-xs text-neutral-500">
-            Store it as a decimal fraction (e.g. <code>0.0200</code> = 2%)
+          <p className="mt-1 text-xs text-red-500">
+            Store concentration as a decimal fraction (e.g. <code>0.0200</code> = 2%)
           </p>
         </div>
 
