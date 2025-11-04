@@ -38,6 +38,15 @@ type Row = {
   _status?: "new" | "existing" | "deleted";
 };
 
+function toRows(initialRows: FormulaIngredientLink[]): Row[] {
+  return initialRows.map((r) => ({
+    ingredientId: r.ingredientId,
+    ingredientName: r.ingredientName,
+    parts: r.parts,
+    _status: "existing",
+  }));
+}
+
 export function FormulaEditorClient({
   formula,
   initialRows,
@@ -50,18 +59,15 @@ export function FormulaEditorClient({
   const router = useRouter();
   const { push } = useToast();
 
+  // view/edit toggle
+  const [editMode, setEditMode] = useState(false);
+
+  // state derived from props
   const [name, setName] = useState(formula.name);
-  const [rows, setRows] = useState<Row[]>(
-    initialRows.map((r) => ({
-      ingredientId: r.ingredientId,
-      ingredientName: r.ingredientName,
-      parts: r.parts,
-      _status: "existing",
-    }))
-  );
+  const [rows, setRows] = useState<Row[]>(toRows(initialRows));
   const [saving, setSaving] = useState(false);
 
-  // NEW: cache of ingredient allergens
+  // cache of ingredient allergens
   const [allergenCache, setAllergenCache] = useState<
     Record<
       number,
@@ -72,6 +78,7 @@ export function FormulaEditorClient({
   const changedName = name.trim() !== formula.name.trim();
 
   function addRow() {
+    if (!editMode) return;
     setRows((prev) => [
       ...prev,
       { ingredientId: "", parts: "", _status: "new" },
@@ -79,12 +86,14 @@ export function FormulaEditorClient({
   }
 
   function updateRow(idx: number, patch: Partial<Row>) {
+    if (!editMode) return;
     setRows((prev) =>
       prev.map((row, i) => (i === idx ? { ...row, ...patch } : row))
     );
   }
 
   function removeRow(idx: number) {
+    if (!editMode) return;
     setRows((prev) => {
       const target = prev[idx];
       if (!target._status || target._status === "new") {
@@ -96,15 +105,7 @@ export function FormulaEditorClient({
     });
   }
 
-  // const ingredientMap = useMemo(() => {
-  //   const m = new Map<number, string>();
-  //   for (const ing of ingredientOptions) {
-  //     m.set(ing.id, ing.name);
-  //   }
-  //   return m;
-  // }, [ingredientOptions]);
-
-  // NEW: whenever rows change and we see a selected ingredient we don't have allergens for, fetch them
+  // fetch allergens for all ingredients in the formula (for the summary)
   useEffect(() => {
     (async () => {
       for (const row of rows) {
@@ -121,7 +122,6 @@ export function FormulaEditorClient({
             const data = await fetchIngredientAllergens(ingId);
             setAllergenCache((prev) => ({ ...prev, [ingId]: data }));
           } catch (e: any) {
-            // non-fatal, just toast
             push({
               title: "Could not load allergens",
               description: e.message,
@@ -132,9 +132,8 @@ export function FormulaEditorClient({
     })();
   }, [rows, allergenCache, push]);
 
-  // NEW: compute allergen summary
+  // computed allergen summary (read-only, always shown)
   const allergenSummary = useMemo(() => {
-    // total parts of formula
     const activeRows = rows.filter(
       (r) => r._status !== "deleted" && r.ingredientId !== "" && r.parts !== ""
     );
@@ -144,7 +143,6 @@ export function FormulaEditorClient({
     );
     if (!totalParts) return [];
 
-    // aggregate
     const agg = new Map<
       number,
       { name: string; total: number }
@@ -153,11 +151,11 @@ export function FormulaEditorClient({
     for (const r of activeRows) {
       if (typeof r.ingredientId !== "number") continue;
       const ingredientParts = Number(r.parts);
-      const share = ingredientParts / totalParts; // fraction of formula
+      const share = ingredientParts / totalParts;
 
       const ingredientAllergens = allergenCache[r.ingredientId] ?? [];
       for (const a of ingredientAllergens) {
-        const contribution = share * a.concentration; // assuming concentration is fraction of ingredient
+        const contribution = share * a.concentration;
         const key = a.allergenId;
         const label = a.allergenName ?? `Allergen ${a.allergenId}`;
         const existing = agg.get(key);
@@ -169,7 +167,6 @@ export function FormulaEditorClient({
       }
     }
 
-    // to array, sorted desc
     return Array.from(agg.entries())
       .map(([id, v]) => ({
         id,
@@ -207,11 +204,18 @@ export function FormulaEditorClient({
 
       push({ title: "Saved" });
       router.refresh();
+      setEditMode(false);
     } catch (e: any) {
       push({ title: "Save failed", description: e.message });
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleCancel() {
+    setName(formula.name);
+    setRows(toRows(initialRows));
+    setEditMode(false);
   }
 
   async function handleDeleteFormula() {
@@ -228,12 +232,23 @@ export function FormulaEditorClient({
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Edit formula: ${formula.name}`}
+        title={
+          editMode ? `Edit formula: ${formula.name}` : `Formula: ${formula.name}`
+        }
         actions={
           <div className="flex gap-2">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? "Saving…" : "Save"}
-            </Button>
+            {editMode ? (
+              <>
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving…" : "Save"}
+                </Button>
+                <Button variant="ghost" onClick={handleCancel} disabled={saving}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setEditMode(true)}>Edit</Button>
+            )}
             <Button variant="danger" onClick={handleDeleteFormula}>
               Delete
             </Button>
@@ -244,57 +259,79 @@ export function FormulaEditorClient({
       {/* formula name */}
       <section className="rounded-lg border bg-white p-4">
         <label className="form-label">Name</label>
-        <Input value={name} onChange={(e) => setName(e.target.value)} />
+        {editMode ? (
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
+        ) : (
+          <p className="text-sm text-neutral-900">{name}</p>
+        )}
       </section>
 
       {/* composition */}
       <section className="rounded-lg border bg-white p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Composition</h2>
-          <Button variant="secondary" onClick={addRow}>
-            Add ingredient
-          </Button>
+          {editMode ? (
+            <Button variant="secondary" onClick={addRow}>
+              Add ingredient
+            </Button>
+          ) : null}
         </div>
 
         <div className="space-y-2">
           {rows.map((row, idx) =>
             row._status === "deleted" ? null : (
               <div key={idx} className="flex items-center gap-3">
-                <select
-                  className="w-56 rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm outline-none focus:border-neutral-400"
-                  value={row.ingredientId === "" ? "" : String(row.ingredientId)}
-                  onChange={(e) =>
-                    updateRow(idx, {
-                      ingredientId:
-                        e.target.value === ""
-                          ? ""
-                          : Number(e.target.value),
-                    })
-                  }
-                >
-                  <option value="">Select ingredient…</option>
-                  {ingredientOptions.map((ing) => (
-                    <option key={ing.id} value={ing.id}>
-                      {ing.name}
-                    </option>
-                  ))}
-                </select>
+                {editMode ? (
+                  <select
+                    className="w-56 rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm outline-none focus:border-neutral-400"
+                    value={
+                      row.ingredientId === "" ? "" : String(row.ingredientId)
+                    }
+                    onChange={(e) =>
+                      updateRow(idx, {
+                        ingredientId:
+                          e.target.value === "" ? "" : Number(e.target.value),
+                      })
+                    }
+                  >
+                    <option value="">Select ingredient…</option>
+                    {ingredientOptions.map((ing) => (
+                      <option key={ing.id} value={ing.id}>
+                        {ing.name}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="w-56 text-sm text-neutral-900">
+                    {ingredientOptions.find((ing) => ing.id === row.ingredientId)
+                      ?.name ?? row.ingredientName ?? "—"}
+                  </p>
+                )}
 
-                <Input
-                  type="number"
-                  className="w-28"
-                  value={row.parts === "" ? "" : String(row.parts)}
-                  onChange={(e) =>
-                    updateRow(idx, {
-                      parts: e.target.value === "" ? "" : Number(e.target.value),
-                    })
-                  }
-                  placeholder="parts"
-                />
+                {editMode ? (
+                  <Input
+                    type="number"
+                    className="w-28"
+                    value={row.parts === "" ? "" : String(row.parts)}
+                    onChange={(e) =>
+                      updateRow(idx, {
+                        parts:
+                          e.target.value === "" ? "" : Number(e.target.value),
+                      })
+                    }
+                    placeholder="parts"
+                  />
+                ) : (
+                  <p className="w-28 text-right text-sm text-neutral-900">
+                    {row.parts === "" ? "—" : row.parts}
+                  </p>
+                )}
 
-                <Button variant="ghost" onClick={() => removeRow(idx)}>
-                  Remove
-                </Button>
+                {editMode ? (
+                  <Button variant="ghost" onClick={() => removeRow(idx)}>
+                    Remove
+                  </Button>
+                ) : null}
               </div>
             )
           )}
@@ -307,7 +344,7 @@ export function FormulaEditorClient({
         </div>
       </section>
 
-      {/* NEW: allergen summary panel */}
+      {/* allergen summary */}
       <section className="rounded-lg border bg-white p-4 space-y-3">
         <h2 className="text-sm font-medium">Allergen summary</h2>
         {allergenSummary.length === 0 ? (
@@ -322,7 +359,6 @@ export function FormulaEditorClient({
                 className="flex items-center justify-between text-sm"
               >
                 <span>{a.name}</span>
-                {/* show as percentage with 2 decimals */}
                 <span className="font-mono text-neutral-700">
                   {(a.total * 100).toFixed(2)}%
                 </span>
