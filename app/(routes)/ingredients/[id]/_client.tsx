@@ -2,13 +2,14 @@
 // app/(routes)/ingredients/[id]/_client.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Ingredients } from "@/services/ingredients";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import PageHeader from "@/components/PageHeader";
 import { useToast } from "@/components/ui/toast/ToastProvider";
+import { formatMax } from "@/lib/utils";
 
 type Ingredient = {
   id: number;
@@ -24,6 +25,13 @@ type AllergenLink = {
   maxConcentration?: string | null;
   // older responses
   name?: string | null;
+};
+
+type AllergenOption = {
+  id: number;
+  name: string;
+  casNumber?: string | null;
+  maxConcentration?: string | null;
 };
 
 export default function IngredientDetailClient({
@@ -44,15 +52,36 @@ export default function IngredientDetailClient({
   const [links, setLinks] = useState<AllergenLink[]>(allergens);
   const [saving, setSaving] = useState(false);
 
+  // add-allergen state
+  const [allAllergens, setAllAllergens] = useState<AllergenOption[]>([]);
+  const [adding, setAdding] = useState(false);
+  const [newAllergenId, setNewAllergenId] = useState<number | "">("");
+  const [newConcentration, setNewConcentration] = useState("0");
+
   const nameChanged = useMemo(
     () => draftName.trim() !== ingredient.name.trim(),
     [draftName, ingredient.name]
   );
 
+  // fetch all allergens so we can add new ones
+  useEffect(() => {
+    if (!editMode) return;
+    // basic fetch, you can swap this for your services layer if you want
+    (async () => {
+      try {
+        const res = await fetch("/api/allergens");
+        if (!res.ok) return;
+        const data: AllergenOption[] = await res.json();
+        setAllAllergens(data);
+      } catch {
+        // ignore for now
+      }
+    })();
+  }, [editMode]);
+
   async function saveAll() {
     setSaving(true);
     try {
-      // only update name if it changed
       if (nameChanged) {
         await Ingredients.update(ingredient.id, {
           name: draftName.trim(),
@@ -80,8 +109,7 @@ export default function IngredientDetailClient({
     }
   }
 
-  // This is the functionality you had inline in the old page.tsx;
-  // we just moved it here, and we guard it behind edit mode.
+  // update concentration for an existing link
   async function onLinkChange(idx: number, next: AllergenLink) {
     if (!editMode) return;
     setLinks((arr) => arr.map((l, i) => (i === idx ? next : l)));
@@ -110,16 +138,55 @@ export default function IngredientDetailClient({
     setDraftName(ingredient.name);
     setLinks(allergens);
     setEditMode(false);
+    setAdding(false);
+    setNewAllergenId("");
+    setNewConcentration("0");
   }
+
+  // add a brand new allergen link
+  async function addAllergen() {
+    if (!editMode) return;
+    if (newAllergenId === "") return;
+    const numericConcentration = Number(newConcentration) || 0;
+
+    try {
+      await Ingredients.upsertAllergen(ingredient.id, {
+        allergenId: Number(newAllergenId),
+        concentration: numericConcentration,
+      });
+
+      // find more info from the loaded list so we can show name/CAS right away
+      const info = allAllergens.find((a) => a.id === Number(newAllergenId));
+
+      setLinks((prev) => [
+        ...prev,
+        {
+          allergenId: Number(newAllergenId),
+          concentration: numericConcentration,
+          allergenName: info?.name,
+          casNumber: info?.casNumber ?? null,
+          maxConcentration: info?.maxConcentration ?? null,
+        },
+      ]);
+
+      setAdding(false);
+      setNewAllergenId("");
+      setNewConcentration("0");
+      push({ title: "Allergen added" });
+    } catch (e: any) {
+      push({ title: "Failed to add allergen", description: e.message });
+    }
+  }
+
+  // filter out allergens that are already linked
+  const availableToAdd = allAllergens.filter(
+    (a) => !links.some((l) => l.allergenId === a.id)
+  );
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title={
-          editMode
-            ? `Edit ingredient: ${ingredient.name}`
-            : `Ingredient: ${ingredient.name}`
-        }
+        title={editMode ? `Edit ${ingredient.name}` : `${ingredient.name}`}
         actions={
           <div className="flex gap-2">
             {editMode ? (
@@ -158,49 +225,114 @@ export default function IngredientDetailClient({
 
       {/* Allergens section */}
       <section className="rounded-lg border bg-white p-4">
-        <div className="mb-3 text-sm font-medium">Allergens</div>
-        <div className="space-y-2">
-          {links.map((l, i) => (
-            <div key={l.allergenId} className="flex items-center gap-3">
-              <div className="min-w-0 flex-1 text-sm">
-                <p className="truncate">
-                  {l.allergenName ?? l.name ?? `#${l.allergenId}`}
-                </p>
-                {/* optional extra info from the new endpoint */}
-                {(l.casNumber || l.maxConcentration) && (
-                  <p className="text-xs text-neutral-500">
-                    CAS: {l.casNumber || "—"} | Max:{" "}
-                    {l.maxConcentration || "—"}
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="text-sm font-medium">Allergens</div>
+          {editMode ? (
+            <Button
+              variant={adding ? "secondary" : "ghost"}
+              onClick={() => setAdding((p) => !p)}
+            >
+              {adding ? "Close" : "Add allergen"}
+            </Button>
+          ) : null}
+        </div>
+
+        {editMode && 
+        <p className="mb-3 text-xs text-red-500 text-right">
+          Store concentration as a decimal fraction (e.g. <code>0.0200</code> = 2%)
+        </p>
+        }
+        {/* add row */}
+        {editMode && adding ? (
+          <div className="mb-4 flex flex-col gap-2 rounded-md bg-neutral-50 p-3 sm:flex-row sm:items-center">
+            <select
+              className="w-full rounded-md border px-2 py-1 text-sm"
+              value={newAllergenId}
+              onChange={(e) =>
+                setNewAllergenId(
+                  e.target.value === "" ? "" : Number(e.target.value)
+                )
+              }
+            >
+              <option value="">Select allergen…</option>
+              {availableToAdd.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                  {a.casNumber ? ` (${a.casNumber})` : ""}
+                </option>
+              ))}
+            </select>
+            <Input
+              type="number"
+              step="0.01"
+              className="w-32"
+              value={newConcentration}
+              onChange={(e) => setNewConcentration(e.target.value)}
+              placeholder="conc."
+            />
+            <Button
+              onClick={addAllergen}
+              disabled={newAllergenId === "" || availableToAdd.length === 0}
+            >
+              Add
+            </Button>
+          </div>
+        ) : null}
+
+        <div className="space-y-3">
+          {links.map((l, i) => {
+            const displayName =
+              l.allergenName ?? l.name ?? `Allergen #${l.allergenId}`; // fallback so we always show something
+
+            return (
+              <div
+                key={l.allergenId}
+                className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
+              >
+                {/* left block: name + meta */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-neutral-900 truncate">
+                    {displayName}
                   </p>
-                )}
-              </div>
-
-              {editMode ? (
-                <Input
-                    type="number"
-                    step="0.01"
-                    className="w-28"
-                    value={String(l.concentration)}
-                    onChange={(e) =>
-                      onLinkChange(i, {
-                        ...l,
-                        concentration: Number(e.target.value),
-                      })
-                    }
-                  />
-              ) : (
-                <div className="w-28 text-right text-sm text-neutral-700">
-                  {l.concentration}
+                  {(l.casNumber || l.maxConcentration) && (
+                    <p className="text-xs text-neutral-500">
+                      {l.casNumber ? `CAS: ${l.casNumber}` : null}
+                      {l.casNumber && l.maxConcentration ? " • " : null}
+                      {l.maxConcentration ? `Max: ${formatMax(l.maxConcentration)}` : null}
+                    </p>
+                  )}
                 </div>
-              )}
 
-              {editMode ? (
-                <Button variant="ghost" onClick={() => removeLink(i)}>
-                  Remove
-                </Button>
-              ) : null}
-            </div>
-          ))}
+                {/* right block: input + remove */}
+                <div className="flex items-center gap-2 sm:w-auto">
+                  {editMode ? (
+                    <Input
+                      type="number"
+                      step="0.01"
+                      className="w-28"
+                      value={String(l.concentration)}
+                      onChange={(e) =>
+                        onLinkChange(i, {
+                          ...l,
+                          concentration: Number(e.target.value),
+                        })
+                      }
+                    />
+                  ) : (
+                    <div className="w-28 text-sm text-neutral-700 text-right">
+                      {formatMax(l.concentration)}
+                    </div>
+                  )}
+
+                  {editMode ? (
+                    <Button variant="ghost" onClick={() => removeLink(i)}>
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
 
           {links.length === 0 && (
             <div className="text-sm text-neutral-500">No allergens linked</div>
