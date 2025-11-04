@@ -7,6 +7,7 @@ import {
   timestamp,
   primaryKey,
   uniqueIndex,
+  numeric,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -20,6 +21,8 @@ export const allergens = pgTable("allergen", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   ownerId: text("owner_id").notNull().default("public"),
+  casNumber: text("cas_number"),
+  maxConcentration: numeric("max_concentration", { precision: 6, scale: 4 }),
 });
 
 export const ingredientAllergens = pgTable(
