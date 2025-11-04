@@ -5,7 +5,11 @@ import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
 import { parseId } from "@/lib/params";
 
-const patchSchema = z.object({ name: z.string().min(1) });
+const patchSchema = z.object({
+  name: z.string().min(1),
+  casNumber: z.string().optional().nullable(),
+  maxConcentration: z.string().optional().nullable(),
+});
 
 export async function GET(
   _: Request,
@@ -26,11 +30,15 @@ export async function PATCH(
 ) {
   const ownerId = getOwnerId();
   const id = await parseId(params);
-  const { name } = patchSchema.parse(await req.json());
+  const parsed = patchSchema.parse(await req.json());
 
   const [row] = await db
     .update(allergens)
-    .set({ name })
+    .set({ 
+      name: parsed.name,
+      casNumber: parsed.casNumber,
+      maxConcentration: parsed.maxConcentration,
+     })
     .where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)))
     .returning();
 

@@ -1,10 +1,10 @@
 # Ingredients
 
 ###GET
-GET http://localhost:3001/api/ingredients
+GET http://localhost:3000/api/ingredients
 
 ###POST
-POST http://localhost:3001/api/ingredients
+POST http://localhost:3000/api/ingredients
 content-type: application/json
 
 {
@@ -12,13 +12,13 @@ content-type: application/json
 }
 
 ### GET one exists
-GET http://localhost:3001/api/ingredients/16
+GET http://localhost:3000/api/ingredients/16
 
 ### GET one does not found
-GET http://localhost:3001/api/ingredients/20
+GET http://localhost:3000/api/ingredients/20
 
 ### PATCH success
-PATCH http://localhost:3001/api/ingredients/16
+PATCH http://localhost:3000/api/ingredients/16
 Content-Type: application/json
 
 {
@@ -26,7 +26,7 @@ Content-Type: application/json
 }
 
 ###PATCH not found
-PATCH http://localhost:3001/api/ingredients/20
+PATCH http://localhost:3000/api/ingredients/20
 Content-Type: application/json
 
 {
@@ -34,22 +34,22 @@ Content-Type: application/json
 }
 
 ### DELETE one 204 success
-DELETE http://localhost:3001/api/ingredients/16
+DELETE http://localhost:3000/api/ingredients/16
 
 ### DELETE one 404 not found
-DELETE http://localhost:3001/api/ingredients/15
+DELETE http://localhost:3000/api/ingredients/15
 
 ### DELETE one 422 in use (Bergamot in use with id 9)
-DELETE http://localhost:3001/api/ingredients/9
+DELETE http://localhost:3000/api/ingredients/9
 
 ## Ingredient Allergens
 ### GET allergens for one ingredient
-GET http://localhost:3001/api/ingredients/9/allergens
+GET http://localhost:3000/api/ingredients/9/allergens
 ### GET allergens for one ingredient not found
-GET http://localhost:3001/api/ingredients/1/allergens
+GET http://localhost:3000/api/ingredients/1/allergens
 
 ###POST allergens conentration for ingredient
-POST http://localhost:3001/api/ingredients/9/allergens
+POST http://localhost:3000/api/ingredients/9/allergens
 Content-Type: application/json
 
 {
@@ -58,35 +58,45 @@ Content-Type: application/json
 }
 
 ###DELETE allergen from ingredient
-DELETE http://localhost:3001/api/ingredients/9/allergens/10
+DELETE http://localhost:3000/api/ingredients/9/allergens/10
 
 #Allergens
 
 ### GET Allergens
-GET http://localhost:3001/api/allergens
+GET http://localhost:3000/api/allergens
 
 ### POST new
-POST http://localhost:3001/api/allergens
+POST http://localhost:3000/api/allergens
 Content-Type: application/json
 
 {
   "name": "New Allergen"
 }
 
+### POST new with cas and concentration
+POST http://localhost:3000/api/allergens
+Content-Type: application/json
+
+{
+  "name": "New Allergen",
+  "casNumber": "123-45-6",
+  "maxConcentration": "0.05"
+}
+
 ### GET ONE
-GET http://localhost:3001/api/allergens/13
+GET http://localhost:3000/api/allergens/13
 ### GET ONE not found
-GET http://localhost:3001/api/allergens/1
+GET http://localhost:3000/api/allergens/1
 
 ###PATCH one
-PATCH  http://localhost:3001/api/allergens/13
+PATCH  http://localhost:3000/api/allergens/13
 Content-Type: application/json
 
 {
   "name": "Renamed Allergen"
 }
 ###PATCH one not found
-PATCH  http://localhost:3001/api/allergens/1
+PATCH  http://localhost:3000/api/allergens/1
 Content-Type: application/json
 
 {
@@ -94,21 +104,21 @@ Content-Type: application/json
 }
 
 ###DELETE 204 no content (deleted)
-DELETE http://localhost:3001/api/allergens/13
+DELETE http://localhost:3000/api/allergens/13
 
 ### DELETE not found
-DELETE http://localhost:3001/api/allergens/13
+DELETE http://localhost:3000/api/allergens/13
 
 ### DELETE in use 422
-DELETE http://localhost:3001/api/allergens/8
+DELETE http://localhost:3000/api/allergens/8
 
 # Formulas
 
 ### GET all
-GET http://localhost:3001/api/formulas
+GET http://localhost:3000/api/formulas
 
 ### POST
-POST http://localhost:3001/api/formulas
+POST http://localhost:3000/api/formulas
 Content-Type: application/json
 
 {
@@ -116,10 +126,10 @@ Content-Type: application/json
 }
 
 ### GET One
-GET http://localhost:3001/api/formulas/4
+GET http://localhost:3000/api/formulas/4
 
 ### PATCH one
-PATCH http://localhost:3001/api/formulas/7
+PATCH http://localhost:3000/api/formulas/7
 Content-Type: application/json
 
 {
@@ -127,7 +137,7 @@ Content-Type: application/json
 }
 
 ### PATCH one not found
-PATCH http://localhost:3001/api/formulas/20
+PATCH http://localhost:3000/api/formulas/20
 Content-Type: application/json
 
 {
@@ -135,24 +145,24 @@ Content-Type: application/json
 }
 
 ### DELETE ok
-DELETE http://localhost:3001/api/formulas/7
+DELETE http://localhost:3000/api/formulas/7
 
 
 ### DELETE not found
-DELETE http://localhost:3001/api/formulas/7
+DELETE http://localhost:3000/api/formulas/7
 
 
 ### DELETE ingredients in use (should be allowed just formula ingredient removed)
-DELETE http://localhost:3001/api/formulas/4
+DELETE http://localhost:3000/api/formulas/4
 
 ### GET ingreidents for formula
-GET http://localhost:3001/api/formulas/4/ingredients
+GET http://localhost:3000/api/formulas/4/ingredients
 
 ### GET ingreidents for formula not found
-GET http://localhost:3001/api/formulas/40/ingredients
+GET http://localhost:3000/api/formulas/40/ingredients
 
 ### POST ingreidents for formula
-POST http://localhost:3001/api/formulas/4/ingredients
+POST http://localhost:3000/api/formulas/4/ingredients
 Content-Type: application/json
 
 {
@@ -161,4 +171,4 @@ Content-Type: application/json
 }
 
 ### DELETE ingredient from formula
-DELETE http://localhost:3001/api/formulas/4/ingredients/10
+DELETE http://localhost:3000/api/formulas/4/ingredients/10

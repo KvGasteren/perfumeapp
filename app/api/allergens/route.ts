@@ -5,13 +5,17 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
 
-const createSchema = z.object({ name: z.string().min(1) });
+const createSchema = z.object({
+  name: z.string().min(1),
+  casNumber: z.string().optional().nullable(),
+  maxConcentration: z.string().optional().nullable(),
+});
 
 export async function GET() {
   const ownerId = getOwnerId();
   const rows = await db.query.allergens.findMany({
     where: eq(allergens.ownerId, ownerId),
-    orderBy: (i: { name: any; }, { asc }: any) => [asc(i.name)],
+    orderBy: (i: { name: any }, { asc }: any) => [asc(i.name)],
   });
   return Response.json(rows);
 }
@@ -19,7 +23,15 @@ export async function GET() {
 export async function POST(req: Request) {
   const ownerId = getOwnerId();
   const body = await req.json();
-  const { name } = createSchema.parse(body);
-  const [row] = await db.insert(allergens).values({ name, ownerId }).returning();
+  const parsed = createSchema.parse(body);
+  const [row] = await db
+    .insert(allergens)
+    .values({
+      name: parsed.name,
+      ownerId,
+      casNumber: parsed.casNumber,
+      maxConcentration: parsed.maxConcentration,
+    })
+    .returning();
   return Response.json(row, { status: 201 });
 }
