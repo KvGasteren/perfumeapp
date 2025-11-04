@@ -2,29 +2,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/Button";
 import { Table, THead, TR, TH, TD } from "@/components/ui/Table";
 import type { Ingredient } from "@/lib/zodSchemas";
+import { useSearch } from "@/hooks/useSearch";
+import { SearchField } from "@/components/SearchField";
+
 
 export function IngredientsListClient({ items }: { items: Ingredient[] }) {
-  const [query, setQuery] = useState("");
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((i) => i.name.toLowerCase().includes(q));
-  }, [items, query]);
+  const { query, setQuery, filtered } = useSearch(items, { keys: ["name"] });
+
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search ingredients…"
-          className="w-64 rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm outline-none focus:border-neutral-400"
-        />
+        <SearchField value={query} onChange={setQuery} placeholder="Search ingredients..." />
         <Link href="/ingredients/new">
           <Button>New</Button>
         </Link>

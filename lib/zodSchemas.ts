@@ -7,6 +7,8 @@ export type Ingredient = z.infer<typeof Ingredient>;
 export const Allergen = z.object({
   id: z.number(),
   name: z.string(),
+  casNumber: z.string().optional(),
+  maxConcentration: z.union([z.number(), z.string()]).optional(),
 });
 export type Allergen = z.infer<typeof Allergen>;
 
