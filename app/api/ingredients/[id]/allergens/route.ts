@@ -32,6 +32,8 @@ export async function GET(
       allergenId: allergens.id,
       allergenName: allergens.name,
       concentration: ingredientAllergens.concentration,
+      casNumber: allergens.casNumber,
+      maxConcentration: allergens.maxConcentration,
     })
     .from(ingredientAllergens)
     .innerJoin(allergens, eq(ingredientAllergens.allergenId, allergens.id))
