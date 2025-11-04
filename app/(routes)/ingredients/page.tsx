@@ -1,12 +1,12 @@
 // app/(routes)/ingredients/page.tsx
 import PageHeader from "@/components/PageHeader";
-import { Ingredients } from "@/services/ingredients";
 import { IngredientsListClient } from "./_client";
+import { getIngredientsWithAllergenSummary } from "@/lib/data/ingredients";
 
 export const dynamic = "force-dynamic";
 
 export default async function IngredientsPage() {
-  const items = await Ingredients.list();
+  const items = await getIngredientsWithAllergenSummary()
 
   return (
     <div>
