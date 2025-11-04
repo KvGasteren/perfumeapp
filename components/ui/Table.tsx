@@ -1,35 +1,90 @@
 import { ReactNode } from "react";
+import { cn } from "@/lib/utils"; // adjust if your utils file is elsewhere
 
-export function Table({ children }: { children: ReactNode }) {
+export function Table({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+    <div
+      className={cn(
+        "overflow-hidden rounded-lg border border-neutral-200 bg-white",
+        className
+      )}
+    >
       <table className="w-full text-left text-sm">{children}</table>
     </div>
   );
 }
 
-export function THead({ children }: { children: ReactNode }) {
-  return <thead className="bg-neutral-50 text-neutral-500">{children}</thead>;
+export function THead({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <thead className={cn("bg-neutral-50 text-neutral-500", className)}>
+      {children}
+    </thead>
+  );
 }
 
-export function TR({ children }: { children: ReactNode }) {
-  return <tr className="border-b last:border-b-0">{children}</tr>;
+export function TR({
+  children,
+  className,
+  onClick,
+}: {
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}) {
+  // if clickable, add cursor + transition
+  const clickable = typeof onClick === "function";
+  return (
+    <tr
+      onClick={onClick}
+      className={cn(
+        "border-b last:border-b-0",
+        clickable &&
+          "cursor-pointer transition-colors hover:bg-neutral-50 active:bg-neutral-100",
+        className
+      )}
+    >
+      {children}
+    </tr>
+  );
 }
 
 export function TH({
   children,
   width,
+  className,
 }: {
   children: ReactNode;
   width?: string;
+  className?: string;
 }) {
   return (
-    <th className="px-4 py-2 font-medium" style={{ width }}>
+    <th
+      className={cn("px-4 py-2 font-medium", className)}
+      style={width ? { width } : undefined}
+    >
       {children}
     </th>
   );
 }
 
-export function TD({ children }: { children: ReactNode }) {
-  return <td className="px-4 py-2 align-top">{children}</td>;
+export function TD({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <td className={cn("px-4 py-2 align-top", className)}>{children}</td>;
 }

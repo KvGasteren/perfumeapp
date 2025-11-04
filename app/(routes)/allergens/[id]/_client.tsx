@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import { Allergens } from "@/services/allergens";
+import { formatMax } from "@/lib/utils";
 
 type Allergen = {
   id: number;
@@ -99,8 +100,8 @@ export default function AllergenDetailClient({
       <PageHeader
         title={
           editMode
-            ? `Edit allergen: ${allergen.name}`
-            : `Allergen: ${allergen.name}`
+            ? `Edit ${allergen.name}`
+            : `${allergen.name}`
         }
         actions={
           <div className="flex gap-2">
@@ -158,7 +159,7 @@ export default function AllergenDetailClient({
         <label className="block text-xs font-medium text-neutral-600">
           Max concentration
         </label>
-        {editMode ? (
+        {editMode ? (<>
           <Input
             type="number"
             step="0.0001"
@@ -166,14 +167,16 @@ export default function AllergenDetailClient({
             onChange={(e) => setMaxConcentration(e.target.value)}
             placeholder="0.0200"
           />
-        ) : (
-          <p className="text-sm text-neutral-900">
-            {maxConcentration ? maxConcentration : "—"}
-          </p>
-        )}
-        <p className="text-xs text-neutral-400">
+          <p className="text-xs text-neutral-400">
           Store it as a decimal fraction (e.g. 0.0200 = 2%)
         </p>
+        </>
+        ) : (
+          <p className="text-sm text-neutral-900">
+            {formatMax(maxConcentration)}
+          </p>
+        )}
+        
       </section>
     </div>
   );

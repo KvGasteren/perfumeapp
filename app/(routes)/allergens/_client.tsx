@@ -4,21 +4,25 @@ import { SearchField } from "@/components/SearchField";
 import { Button } from "@/components/ui/Button";
 import { Table, TD, TH, THead, TR } from "@/components/ui/Table";
 import { useSearch } from "@/hooks/useSearch";
+import { formatMax } from "@/lib/utils";
 import { Allergen } from "@/lib/zodSchemas";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function AllergensClient({ items }: { items: Allergen[] }) {
   const { query, setQuery, filtered } = useSearch<Allergen>(items, {
     keys: ["name", "casNumber"],
   });
+  const router = useRouter();
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <SearchField
           value={query}
           onChange={setQuery}
-          placeholder="Search Allergens..."
+          placeholder="Search Allergens (by name or CAS)..."
+          className="flex-1 min-w-[200px]"
         />
         <Link href="/allergens/new">
           <Button>New</Button>
@@ -26,47 +30,34 @@ export function AllergensClient({ items }: { items: Allergen[] }) {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="empty-state">No allergens yet</div>
+        <div className="rounded-lg border border-dashed bg-neutral-50 px-4 py-8 text-center text-sm text-neutral-500">
+          No allergens yet.
+        </div>
       ) : (
         <Table>
           <THead>
             <TR>
-              <TH>Name</TH>
-              <TH width="120px">Actions</TH>
+              <TH className="w-[40%]">Name</TH>
+              <TH className="w-[25%]">CAS-number</TH>
+              <TH className="w-[25%]">Max. Concentration</TH>
             </TR>
           </THead>
           <tbody>
             {filtered.map((a) => (
-              <TR key={a.id}>
+              <TR
+                key={a.id}
+                onClick={() => router.push(`/allergens/${a.id}`)}
+                className="cursor-pointer transition-colors hover:bg-neutral-50 active:bg-neutral-100"
+              >
                 <TD>
-                  <Link
-                    href={`/allergens/${a.id}`}
-                    className="hover:underline font-medium"
-                  >
-                    {a.name}
-                  </Link>
-
-                  {/* extra details line, muted just like in ingredient detail */}
-                  {(a.casNumber || a.maxConcentration != null) && (
-                    <div className="text-xs text-neutral-500 mt-1">
-                      {a.casNumber ? (
-                        <span>CAS: {a.casNumber}</span>
-                      ) : null}
-                      {a.casNumber && a.maxConcentration != null ? " • " : null}
-                      {a.maxConcentration != null ? (
-                        <span>Max: {a.maxConcentration}%</span>
-                      ) : null}
-                    </div>
-                  )}
+                  <div className="flex flex-col">{a.name}</div>
                 </TD>
                 <TD>
-                  <Link
-                    href={`/allergens/${a.id}`}
-                    className="text-sm text-neutral-600 hover:underline"
-                  >
-                    Edit
-                  </Link>
+                  {a.casNumber && a.casNumber.trim().length > 0
+                    ? a.casNumber
+                    : "—"}
                 </TD>
+                <TD>{formatMax(a.maxConcentration)}</TD>
               </TR>
             ))}
           </tbody>
