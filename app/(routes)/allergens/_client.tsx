@@ -17,7 +17,8 @@ export function AllergensClient({ items }: { items: Allergen[] }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
         <SearchField
           value={query}
           onChange={setQuery}

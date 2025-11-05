@@ -258,8 +258,9 @@ export function FormulaEditorClient({
         }
       />
 
+
       {/* formula name */}
-      <section className="rounded-lg border bg-white p-4">
+      <section className="rounded-lg border bg-white p-4 space-y-4">
         <label className="form-label">Name</label>
         {editMode ? (
           <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -270,10 +271,10 @@ export function FormulaEditorClient({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6ft)]">
 
-      
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
 
       {/* composition */}
-      <section className="rounded-lg border bg-white p-4 space-y-3">
+      <section className="rounded-lg border bg-white p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium">Composition</h2>
           {editMode ? (
@@ -377,6 +378,7 @@ export function FormulaEditorClient({
           </div>
         )}
       </section>
+      </div>
       </div>
     </div>
   );

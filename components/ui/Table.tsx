@@ -11,11 +11,11 @@ export function Table({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-lg border border-neutral-200 bg-white",
+        "overflow-x-auto rounded-lg border border-neutral-200 bg-white",
         className
       )}
     >
-      <table className="w-full text-left text-sm">{children}</table>
+      <table className="min-w-full text-left text-sm">{children}</table>
     </div>
   );
 }
@@ -71,8 +71,8 @@ export function TH({
 }) {
   return (
     <th
-      className={cn("px-4 py-2 font-medium", className)}
-      style={width ? { width } : undefined}
+      className={cn("px-4 py-2 text-xs font-medium uppercase tracking-wide", className)}
+      style={{ width }}
     >
       {children}
     </th>
@@ -87,4 +87,5 @@ export function TD({
   className?: string;
 }) {
   return <td className={cn("px-4 py-2 align-top", className)}>{children}</td>;
+
 }
