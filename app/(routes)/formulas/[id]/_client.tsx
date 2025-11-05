@@ -15,11 +15,12 @@ import type {
 } from "@/lib/zodSchemas";
 import { useRouter } from "next/navigation";
 import { formatMax } from "@/lib/utils";
+import { getBaseUrl } from "@/lib/getBaseUrl";
 
 // helper: fetch allergens for 1 ingredient
 async function fetchIngredientAllergens(ingredientId: number) {
-  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-  const res = await fetch(`${base}/api/ingredients/${ingredientId}/allergens`, {
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/api/ingredients/${ingredientId}/allergens`, {
     cache: "no-store",
   });
   if (!res.ok) {

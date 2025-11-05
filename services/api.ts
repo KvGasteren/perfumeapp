@@ -1,4 +1,6 @@
-const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+import { getBaseUrl } from "@/lib/getBaseUrl";
+
+const baseUrl = getBaseUrl();
 
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -14,10 +16,10 @@ async function json<T>(res: Response): Promise<T> {
 
 export const api = {
   get: async <T>(path: string) =>
-    json<T>(await fetch(`${BASE}${path}`, { cache: "no-store" })),
+    json<T>(await fetch(`${baseUrl}${path}`, { cache: "no-store" })),
   post: async <T>(path: string, body?: unknown) =>
     json<T>(
-      await fetch(`${BASE}${path}`, {
+      await fetch(`${baseUrl}${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -25,14 +27,14 @@ export const api = {
     ),
   patch: async <T>(path: string, body?: unknown) =>
     json<T>(
-      await fetch(`${BASE}${path}`, {
+      await fetch(`${baseUrl}${path}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
     ),
   del: async (path: string) => {
-    const res = await fetch(`${BASE}${path}`, { method: "DELETE" });
+    const res = await fetch(`${baseUrl}${path}`, { method: "DELETE" });
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
       try {

@@ -1,4 +1,5 @@
 // app/(routes)/ingredients/[id]/page.tsx
+import { getBaseUrl } from "@/lib/getBaseUrl";
 import IngredientDetailClient from "./_client";
 
 type Ingredient = {
@@ -26,8 +27,7 @@ export default async function IngredientPage({
   const { id } = await params;
   const ingredientId = Number(id);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = getBaseUrl();
 
   // fetch both ingredient and its allergens from the API
   const [ingredientRes, allergensRes] = await Promise.all([
