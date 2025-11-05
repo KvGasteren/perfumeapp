@@ -8,12 +8,16 @@ import { getOwnerId } from "@/lib/owner";
 const createSchema = z.object({ name: z.string().min(1) });
 
 export async function GET() {
+  try {}
   const ownerId = getOwnerId();
   const rows = await db.query.formulas.findMany({
     where: eq(formulas.ownerId, ownerId),
     orderBy: (i: { name: any; }, { asc }: any) => [asc(i.name)],
   });
   return Response.json(rows);
+} catch (error) {
+  console.error("DB error", error);
+  return new Response.json({error: "Database error", detail: String(error)}, {status: 500});
 }
 
 export async function POST(req: Request) {

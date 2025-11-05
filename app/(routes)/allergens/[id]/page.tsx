@@ -1,4 +1,5 @@
 // app/(routes)/allergens/[id]/page.tsx
+import { getBaseUrl } from "@/lib/getBaseUrl";
 import AllergenDetailClient from "./_client";
 
 type Allergen = {
@@ -17,19 +18,14 @@ export default async function AllergenPage({
   const { id } = await params;
   const allergenId = Number(id);
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+  const baseUrl = getBaseUrl();
 
   const res = await fetch(`${baseUrl}/api/allergens/${allergenId}`, {
     cache: "no-store",
   });
 
   if (!res.ok) {
-    return (
-      <div className="p-4 text-sm text-red-500">
-        Allergen not found.
-      </div>
-    );
+    return <div className="p-4 text-sm text-red-500">Allergen not found.</div>;
   }
 
   const allergen: Allergen = await res.json();
