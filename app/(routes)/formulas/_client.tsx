@@ -1,18 +1,26 @@
-"use client"
+"use client";
 
 import { SearchField } from "@/components/SearchField";
 import { Button } from "@/components/ui/Button";
 import { Table, TD, TH, THead, TR } from "@/components/ui/Table";
 import { useSearch } from "@/hooks/useSearch";
 import { Formula } from "@/lib/zodSchemas";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function FormulasClient({ items }: { items: Formula[] }) {
   const { query, setQuery, filtered } = useSearch(items, { keys: ["name"] });
- return (
+  const router = useRouter();
+
+  return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <SearchField value={query} onChange={setQuery} placeholder="Search formulas..." />
+        <SearchField
+          value={query}
+          onChange={setQuery}
+          placeholder="Search formulas..."
+        />
         <Link href="/formulas/new">
           <Button>New</Button>
         </Link>
@@ -26,25 +34,16 @@ export function FormulasClient({ items }: { items: Formula[] }) {
           <THead>
             <TR>
               <TH>Name</TH>
-              <TH width="120px">Actions</TH>
             </TR>
           </THead>
           <tbody>
             {filtered.map((f) => (
-              <TR key={f.id}>
-                <TD>
-                  <Link href={`/formulas/${f.id}`} className="hover:underline">
-                    {f.name}
-                  </Link>
-                </TD>
-                <TD>
-                  <Link
-                    href={`/formulas/${f.id}`}
-                    className="text-sm text-neutral-600 hover:underline"
-                  >
-                    Edit
-                  </Link>
-                </TD>
+              <TR
+                key={f.id}
+                onClick={() => router.push(`/formulas/${f.id}`)}
+                className="cursor-pointer transition-colors hover:bg-neutral-50 active:bg-neutral-100"
+              >
+                <TD>{f.name}</TD>
               </TR>
             ))}
           </tbody>

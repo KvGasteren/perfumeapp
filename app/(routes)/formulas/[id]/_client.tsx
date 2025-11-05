@@ -14,6 +14,7 @@ import type {
   Ingredient,
 } from "@/lib/zodSchemas";
 import { useRouter } from "next/navigation";
+import { formatMax } from "@/lib/utils";
 
 // helper: fetch allergens for 1 ingredient
 async function fetchIngredientAllergens(ingredientId: number) {
@@ -233,7 +234,7 @@ export function FormulaEditorClient({
     <div className="space-y-6">
       <PageHeader
         title={
-          editMode ? `Edit formula: ${formula.name}` : `Formula: ${formula.name}`
+          editMode ? `Edit ${formula.name}` : `${formula.name}`
         }
         actions={
           <div className="flex gap-2">
@@ -266,6 +267,10 @@ export function FormulaEditorClient({
         )}
       </section>
 
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6ft)]">
+
+      
+
       {/* composition */}
       <section className="rounded-lg border bg-white p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -280,10 +285,14 @@ export function FormulaEditorClient({
         <div className="space-y-2">
           {rows.map((row, idx) =>
             row._status === "deleted" ? null : (
-              <div key={idx} className="flex items-center gap-3">
+              <div key={idx} className={
+                editMode
+                  ? "grid grid-cols-[minmax(10rem,1fr)_5.5rem_auto] items-center gap-3"
+                  : "grid grid-cols-[minmax(10rem,1fr)_5.5rem] items-center gap-3"
+              }>
                 {editMode ? (
                   <select
-                    className="w-56 rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm outline-none focus:border-neutral-400"
+                    className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm outline-none focus:border-neutral-400"
                     value={
                       row.ingredientId === "" ? "" : String(row.ingredientId)
                     }
@@ -302,7 +311,7 @@ export function FormulaEditorClient({
                     ))}
                   </select>
                 ) : (
-                  <p className="w-56 text-sm text-neutral-900">
+                  <p className="text-sm text-neutral-900">
                     {ingredientOptions.find((ing) => ing.id === row.ingredientId)
                       ?.name ?? row.ingredientName ?? "—"}
                   </p>
@@ -311,7 +320,7 @@ export function FormulaEditorClient({
                 {editMode ? (
                   <Input
                     type="number"
-                    className="w-28"
+                    className="w-full"
                     value={row.parts === "" ? "" : String(row.parts)}
                     onChange={(e) =>
                       updateRow(idx, {
@@ -322,7 +331,7 @@ export function FormulaEditorClient({
                     placeholder="parts"
                   />
                 ) : (
-                  <p className="w-28 text-right text-sm text-neutral-900">
+                  <p className="text-right text-sm text-neutral-900">
                     {row.parts === "" ? "—" : row.parts}
                   </p>
                 )}
@@ -345,7 +354,7 @@ export function FormulaEditorClient({
       </section>
 
       {/* allergen summary */}
-      <section className="rounded-lg border bg-white p-4 space-y-3">
+      <section className="rounded-lg border bg-white p-4 space-y-3 lg:max-h-[420px] lg:overflow-y-auto">
         <h2 className="text-sm font-medium">Allergen summary</h2>
         {allergenSummary.length === 0 ? (
           <div className="text-sm text-neutral-500">
@@ -359,14 +368,15 @@ export function FormulaEditorClient({
                 className="flex items-center justify-between text-sm"
               >
                 <span>{a.name}</span>
-                <span className="font-mono text-neutral-700">
-                  {(a.total * 100).toFixed(2)}%
+                <span >
+                  {formatMax(a.total)}
                 </span>
               </div>
             ))}
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }
