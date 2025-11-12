@@ -34,6 +34,26 @@ type AllergenOption = {
   maxConcentration?: string | null;
 };
 
+// ---- helpers: percent <-> fraction + formatting ----
+function fractionToPercentString(val: number | string | null | undefined, decimals = 4) {
+  if (val == null || val === "") return "";
+  const n = typeof val === "string" ? Number(val) : val;
+  if (Number.isNaN(n)) return "";
+  return (n * 100).toFixed(decimals); // e.g. 0.02 -> "2.0000"
+}
+
+function percentStringToFraction(val: string, decimals = 6) {
+  if (val.trim() === "") return "";
+  const n = Number(val);
+  if (Number.isNaN(n)) return "";
+  return (n / 100).toFixed(decimals); // string precise for backend
+}
+
+function formatPercent(val: number | string | null | undefined, decimals = 4) {
+  const s = fractionToPercentString(val, decimals);
+  return s === "" ? "—" : `${s}%`;
+}
+
 export default function IngredientDetailClient({
   ingredient,
   allergens,
@@ -56,7 +76,7 @@ export default function IngredientDetailClient({
   const [allAllergens, setAllAllergens] = useState<AllergenOption[]>([]);
   const [adding, setAdding] = useState(false);
   const [newAllergenId, setNewAllergenId] = useState<number | "">("");
-  const [newConcentration, setNewConcentration] = useState("0");
+  const [newConcentrationPct, setNewConcentrationPct] = useState("0");
 
   const nameChanged = useMemo(
     () => draftName.trim() !== ingredient.name.trim(),
@@ -110,13 +130,20 @@ export default function IngredientDetailClient({
   }
 
   // update concentration for an existing link
-  async function onLinkChange(idx: number, next: AllergenLink) {
+  async function onLinkPercentChange(idx: number, pctStr: string) {
     if (!editMode) return;
+
+    // Convert percent string -> fraction number for state
+    const fracStr = percentStringToFraction(pctStr, 6);
+    const fracNum = fracStr === "" ? 0 : Number(fracStr);
+
+    const next = { ...links[idx], concentration: fracNum };
     setLinks((arr) => arr.map((l, i) => (i === idx ? next : l)));
+
     try {
       await Ingredients.upsertAllergen(ingredient.id, {
         allergenId: next.allergenId,
-        concentration: next.concentration,
+        concentration: fracNum, // persist FRACTION
       });
     } catch (e: any) {
       push({ title: "Failed to update allergen", description: e.message });
@@ -140,19 +167,21 @@ export default function IngredientDetailClient({
     setEditMode(false);
     setAdding(false);
     setNewAllergenId("");
-    setNewConcentration("0");
+    setNewConcentrationPct("0");
   }
 
   // add a brand new allergen link
   async function addAllergen() {
     if (!editMode) return;
     if (newAllergenId === "") return;
-    const numericConcentration = Number(newConcentration) || 0;
+    
+    const fracStr = percentStringToFraction(newConcentrationPct, 6);
+    const fracNum = fracStr === "" ? 0 : Number(fracStr);
 
     try {
       await Ingredients.upsertAllergen(ingredient.id, {
         allergenId: Number(newAllergenId),
-        concentration: numericConcentration,
+        concentration: fracNum,
       });
 
       // find more info from the loaded list so we can show name/CAS right away
@@ -162,7 +191,7 @@ export default function IngredientDetailClient({
         ...prev,
         {
           allergenId: Number(newAllergenId),
-          concentration: numericConcentration,
+          concentration: fracNum,
           allergenName: info?.name,
           casNumber: info?.casNumber ?? null,
           maxConcentration: info?.maxConcentration ?? null,
@@ -171,7 +200,7 @@ export default function IngredientDetailClient({
 
       setAdding(false);
       setNewAllergenId("");
-      setNewConcentration("0");
+      setNewConcentrationPct("0");
       push({ title: "Allergen added" });
     } catch (e: any) {
       push({ title: "Failed to add allergen", description: e.message });
@@ -237,11 +266,6 @@ export default function IngredientDetailClient({
           ) : null}
         </div>
 
-        {editMode && 
-        <p className="mb-3 text-xs text-red-500 text-right">
-          Store concentration as a decimal fraction (e.g. <code>0.0200</code> = 2%)
-        </p>
-        }
         {/* add row */}
         {editMode && adding ? (
           <div className="mb-4 flex flex-col gap-2 rounded-md bg-neutral-50 p-3 sm:flex-row sm:items-center">
@@ -262,14 +286,19 @@ export default function IngredientDetailClient({
                 </option>
               ))}
             </select>
-            <Input
-              type="number"
-              step="0.01"
-              className="w-32"
-              value={newConcentration}
-              onChange={(e) => setNewConcentration(e.target.value)}
-              placeholder="conc."
-            />
+             <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.01"
+                min={0}
+                max={100}
+                className="w-32"
+                value={newConcentrationPct}
+                onChange={(e) => setNewConcentrationPct(e.target.value)}
+                placeholder="2.00"
+              />
+              <span className="text-sm text-neutral-600">%</span>
+            </div>
             <Button
               onClick={addAllergen}
               disabled={newAllergenId === "" || availableToAdd.length === 0}
@@ -283,6 +312,8 @@ export default function IngredientDetailClient({
           {links.map((l, i) => {
             const displayName =
               l.allergenName ?? l.name ?? `Allergen #${l.allergenId}`; // fallback so we always show something
+
+            const uiPct = fractionToPercentString(l.concentration, 4);
 
             return (
               <div
@@ -306,21 +337,21 @@ export default function IngredientDetailClient({
                 {/* right block: input + remove */}
                 <div className="flex items-center gap-2 sm:w-auto">
                   {editMode ? (
-                    <Input
-                      type="number"
-                      step="0.01"
-                      className="w-28"
-                      value={String(l.concentration)}
-                      onChange={(e) =>
-                        onLinkChange(i, {
-                          ...l,
-                          concentration: Number(e.target.value),
-                        })
-                      }
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min={0}
+                        max={100}
+                        className="w-28"
+                        value={uiPct}
+                        onChange={(e) => onLinkPercentChange(i, e.target.value)}
+                      />
+                      <span className="text-sm text-neutral-600">%</span>
+                    </div>
                   ) : (
-                    <div className="w-28 text-sm text-neutral-700 text-right">
-                      {formatMax(l.concentration)}
+                    <div className="w-28 text-right text-sm text-neutral-700">
+                      {formatPercent(l.concentration)}
                     </div>
                   )}
 

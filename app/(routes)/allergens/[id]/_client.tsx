@@ -9,7 +9,27 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import { Allergens } from "@/services/allergens";
-import { formatMax } from "@/lib/utils";
+
+
+// --- helpers: percent <-> fraction and formatting ---
+function toPercentStringFromFraction(frac: string | number | null | undefined, decimals = 4) {
+  if (frac == null || frac === "") return "";
+  const n = typeof frac === "string" ? Number(frac) : frac;
+  if (Number.isNaN(n)) return "";
+  return (n * 100).toFixed(decimals); // string
+}
+
+function toFractionStringFromPercent(pctStr: string, decimals = 6) {
+  const n = Number(pctStr);
+  if (pctStr.trim() === "" || Number.isNaN(n)) return "";
+  return (n / 100).toFixed(decimals); // string
+}
+
+function formatPercentFromFraction(frac: string | number | null | undefined, decimals = 4) {
+  const s = toPercentStringFromFraction(frac, decimals);
+  return s === "" ? "—" : `${s}%`;
+}
+
 
 type Allergen = {
   id: number;
@@ -33,19 +53,30 @@ export default function AllergenDetailClient({
   // form fields
   const [name, setName] = useState(allergen.name);
   const [casNumber, setCasNumber] = useState(allergen.casNumber ?? "");
-  const [maxConcentration, setMaxConcentration] = useState(
-    allergen.maxConcentration ?? ""
+  const [maxPercent, setMaxPercent] = useState(
+    toPercentStringFromFraction(allergen.maxConcentration ?? "", 4)
   );
 
   const [saving, setSaving] = useState(false);
+
+  // normalized strings for accurate change detection
+  const originalFractionNorm = useMemo(() => {
+    const s = allergen.maxConcentration ?? "";
+    return s === "" ? "" : Number(s).toFixed(6);
+  }, [allergen.maxConcentration]);
+
+  const currentFractionNorm = useMemo(() => {
+    const s = toFractionStringFromPercent(maxPercent, 6);
+    return s === "" ? "" : Number(s).toFixed(6);
+  }, [maxPercent]);
 
   const changed = useMemo(() => {
     return (
       name.trim() !== allergen.name.trim() ||
       (casNumber ?? "") !== (allergen.casNumber ?? "") ||
-      (maxConcentration ?? "") !== (allergen.maxConcentration ?? "")
+      currentFractionNorm !== originalFractionNorm
     );
-  }, [name, casNumber, maxConcentration, allergen]);
+  }, [name, casNumber, currentFractionNorm, originalFractionNorm, allergen]);
 
   async function save() {
     if (!changed) {
@@ -54,14 +85,13 @@ export default function AllergenDetailClient({
     }
     setSaving(true);
     try {
-      // normalize maxConcentration for the backend (it expects string or null)
+      // convert percent (UI) -> fraction string for backend
+      const fractionStr = toFractionStringFromPercent(maxPercent, 6);
+
       const payload: Record<string, unknown> = {
         name: name.trim(),
         casNumber: casNumber.trim() === "" ? null : casNumber.trim(),
-        maxConcentration:
-          maxConcentration.trim() === ""
-            ? null
-            : maxConcentration.trim(),
+        maxConcentration: fractionStr === "" ? null : fractionStr, // backend expects string or null
       };
 
       await Allergens.update(allergen.id, payload);
@@ -91,7 +121,7 @@ export default function AllergenDetailClient({
   function cancel() {
     setName(allergen.name);
     setCasNumber(allergen.casNumber ?? "");
-    setMaxConcentration(allergen.maxConcentration ?? "");
+    setMaxPercent(toPercentStringFromFraction(allergen.maxConcentration ?? "", 4));
     setEditMode(false);
   }
 
@@ -156,27 +186,26 @@ export default function AllergenDetailClient({
 
       {/* Max concentration */}
       <section className="rounded-lg border bg-white p-4 space-y-2">
-        <label className="block text-xs font-medium text-neutral-600">
-          Max concentration
-        </label>
-        {editMode ? (<>
-          <Input
-            type="number"
-            step="0.0001"
-            value={maxConcentration}
-            onChange={(e) => setMaxConcentration(e.target.value)}
-            placeholder="0.0200"
-          />
-          <p className="text-xs text-neutral-400">
-          Store it as a decimal fraction (e.g. 0.0200 = 2%)
-        </p>
-        </>
+        <label className="block text-xs font-medium text-neutral-600">Max concentration</label>
+        {editMode ? (
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                inputMode="decimal"
+                step="0.01"
+                min={0}
+                max={100}
+                value={maxPercent}
+                onChange={(e) => setMaxPercent(e.target.value)}
+                placeholder="2.00"
+              />
+              <span className="text-sm text-neutral-600">%</span>
+            </div>
         ) : (
           <p className="text-sm text-neutral-900">
-            {formatMax(maxConcentration)}
+            {formatPercentFromFraction(allergen.maxConcentration, 4)}
           </p>
         )}
-        
       </section>
     </div>
   );
