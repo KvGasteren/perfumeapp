@@ -146,10 +146,10 @@ DATABASE_URL=postgresql://...
 ## Author
 
 **Koen van Gasteren**  
-Full-stack developer focused on modern web architectures, automation, and maintainable systems.
+Working on software, analysis, and systems that are meant to be understood and maintained.
 
 - GitHub: https://github.com/KvGasteren
 - LinkedIn: https://linkedin.com/in/koenvangasteren
-- Portfolio: https://koenvangastere.nl
+- Portfolio: https://koenvangasteren.nl
 
 ---
