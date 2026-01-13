@@ -1,36 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Perfume Formula Manager
 
-## Getting Started
+A full-stack web application for managing perfume formulas, ingredients, and allergens.  
+Built as a **production-ready rewrite** of an existing app, optimized for **serverless hosting on Vercel (Hobby tier)** while maintaining pixel-perfect UI parity.
 
-First, run the development server:
+**Live demo**: https://perfume.koenvangasteren.nl  
+**Source code**: https://github.com/KvGasteren/perfumeapp
+
+---
+
+## Features
+
+### Ingredients
+- Create, edit, and delete ingredients
+- Link allergens with precise concentrations
+- Safe deletion: ingredients used in formulas cannot be removed
+
+### Allergens
+- Central allergen registry
+- Automatic allergen summaries per formula
+- Client-side calculations matching regulatory requirements
+
+### Formulas
+- Compose formulas from ingredients with parts/ratios
+- View detailed breakdowns including allergen totals
+- Edit locally and persist changes in a single save action
+
+### UX & Reliability
+- Clean, minimal interface
+- Clear validation and error handling
+- Business rules enforced at API and database level
+
+---
+
+## Why this project?
+
+This project demonstrates:
+
+- Migrating a legacy-style app to a **modern Next.js App Router architecture**
+- Designing a **serverless-friendly backend** without a separate API server
+- Applying **real-world domain rules** (guarded deletes, cascades, constraints)
+- Building a maintainable full-stack application using **TypeScript end-to-end**
+
+It is intended as a realistic portfolio project: not a toy app, but a structured CRUD system with meaningful business logic.
+
+---
+
+## Tech Stack
+
+**Frontend & Backend**
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS
+- Server Components & Route Handlers
+
+**Database**
+- PostgreSQL (Neon, EU region)
+- Drizzle ORM & migrations
+
+**Validation & Tooling**
+- Zod (shared schemas)
+- ESLint / Prettier
+- Playwright & Vitest (planned / partially implemented)
+
+**Hosting**
+- Vercel (Hobby tier, serverless)
+- Neon HTTP pooling for database access
+
+---
+
+## Architecture Overview
+
+```text
+/app
+  /ingredients
+  /formulas
+  /api
+/db
+  /schema        # Drizzle schema
+  /migrations
+/lib             # shared utils & Zod schemas
+/components
+```
+
+### Key architectural choices
+
+- Single Next.js application (no monorepo, no separate backend)
+- Route Handlers for REST-style APIs
+- Strict database constraints instead of relying only on frontend logic
+- Edit locally → save once UX to reduce unnecessary database writes
+
+---
+
+## Business Rules
+
+- An ingredient **cannot be deleted** if it is used in a formula
+- Deleting an ingredient **automatically removes** its allergen links
+- Allergen totals are calculated deterministically on the client
+
+These rules are enforced at both **API** and **database** level.
+
+---
+
+## Running Locally
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Start development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a `.env.local` file:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL=postgresql://...
+```
 
-## Learn More
+(Optional: NextAuth, Sentry, etc.)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Testing (WIP)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Unit tests for schemas and helpers
+- API integration tests for core flows
+- End-to-end tests for ingredient & formula CRUD
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Future Improvements
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Authentication & role-based access
+- Import/export of formulas
+- Expanded test coverage
+
+---
+
+## Author
+
+**Koen van Gasteren**  
+Full-stack developer focused on modern web architectures, automation, and maintainable systems.
+
+- GitHub: https://github.com/KvGasteren
+- LinkedIn: https://linkedin.com/in/koenvangasteren
+- Portfolio: https://koenvangastere.nl
+
+---
