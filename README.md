@@ -25,6 +25,10 @@ Built as a **production-ready rewrite** of an existing app, optimized for **serv
 - View detailed breakdowns including allergen totals
 - Edit locally and persist changes in a single save action
 
+### Authentication
+- Email/password sign-in via Clerk
+- Per-user data isolation — each user only sees their own formulas and ingredients
+
 ### UX & Reliability
 - Clean, minimal interface
 - Clear validation and error handling
@@ -73,6 +77,7 @@ It is intended as a realistic portfolio project: not a toy app, but a structured
 ```text
 /app
   /ingredients
+  /allergens
   /formulas
   /api
 /db
@@ -106,13 +111,13 @@ These rules are enforced at both **API** and **database** level.
 ### Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Start development server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 ### Environment variables
@@ -121,9 +126,9 @@ Create a `.env.local` file:
 
 ```env
 DATABASE_URL=postgresql://...
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
+CLERK_SECRET_KEY=sk_...
 ```
-
-(Optional: NextAuth, Sentry, etc.)
 
 ---
 
@@ -137,7 +142,6 @@ DATABASE_URL=postgresql://...
 
 ## Future Improvements
 
-- Authentication & role-based access
 - Import/export of formulas
 - Expanded test coverage
 
