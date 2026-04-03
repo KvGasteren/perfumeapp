@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getOwnerId } from "@/lib/owner";
+import { getOwnerFilter } from "@/lib/owner";
 import { parseId } from "@/lib/params";
 import { getFormulaIngredients, upsertFormulaIngredient } from "@/lib/data/formulas";
 import { NotFoundError } from "@/lib/data/errors";
@@ -13,10 +13,9 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = await getOwnerId();
-  const id = await parseId(params);
+  const [id, ownerFilter] = await Promise.all([parseId(params), getOwnerFilter()]);
   try {
-    const rows = await getFormulaIngredients(id, ownerId);
+    const rows = await getFormulaIngredients(id, ownerFilter);
     return Response.json(rows);
   } catch (e) {
     if (e instanceof NotFoundError) return new Response(e.message, { status: 404 });
@@ -28,11 +27,13 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = await getOwnerId();
-  const id = await parseId(params);
-  const { ingredientId, parts } = upsertSchema.parse(await req.json());
+  const [id, ownerFilter, { ingredientId, parts }] = await Promise.all([
+    parseId(params),
+    getOwnerFilter(),
+    req.json().then((b) => upsertSchema.parse(b)),
+  ]);
   try {
-    const row = await upsertFormulaIngredient(id, ingredientId, parts, ownerId);
+    const row = await upsertFormulaIngredient(id, ingredientId, parts, ownerFilter);
     return Response.json(row, { status: 201 });
   } catch (e) {
     if (e instanceof NotFoundError) return new Response(e.message, { status: 404 });
