@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -13,11 +14,12 @@ const links = [
 
 export function AppNav() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const admin = user?.publicMetadata?.role === "admin";
 
   return (
-     <aside
+    <aside
       className={cn(
-        // mobile: full width card; desktop: narrow sidebar
         "w-full rounded-lg border border-neutral-200 bg-white p-3 shadow-sm lg:w-56 lg:shrink-0 lg:self-start"
       )}
     >
@@ -32,7 +34,7 @@ export function AppNav() {
               className={cn(
                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
                 active
-                  ? "bg-neutral-900 text-white lg:bg-white lg:text-neutral-900 lg:shadow-sm"
+                  ? "bg-neutral-900 text-white"
                   : "text-neutral-600 hover:bg-neutral-100"
               )}
             >
@@ -40,6 +42,23 @@ export function AppNav() {
             </Link>
           );
         })}
+
+        {admin && (
+          <>
+            <div className="my-1 border-t border-neutral-100 lg:block hidden" />
+            <Link
+              href="/admin"
+              className={cn(
+                "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
+                pathname?.startsWith("/admin")
+                  ? "bg-neutral-900 text-white"
+                  : "text-neutral-400 hover:bg-neutral-100"
+              )}
+            >
+              Admin
+            </Link>
+          </>
+        )}
       </div>
     </aside>
   );
