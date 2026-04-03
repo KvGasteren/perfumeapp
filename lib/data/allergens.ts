@@ -1,33 +1,58 @@
 import { db } from "@/db";
-import { allergens } from "@/db/schema";
+import { allergens, ingredientAllergens } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { getOwnerId } from "../owner";
-
-// export async function getAllAllergens() {
-//   return db.select().from(allergens).orderBy(asc(allergens.name));
-// }
-
-export async function getAllergenById(id: number) {
-  const ownerId = getOwnerId();
-  const [row] = await db.select().from(allergens).where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId))).orderBy();
-  return row ?? null;
-}
-
-export async function createAllergen(data: { name: string; casNumber?: string }) {
-  const [inserted] = await db.insert(allergens).values(data).returning();
-  return inserted;
-}
-
-export async function updateAllergen(id: number, patch: { name?: string; casNumber?: string }) {
-  const [updated] = await db.update(allergens).set(patch).where(eq(allergens.id, id)).returning();
-  return updated;
-}
-
+import { NotFoundError, ConflictError } from "./errors";
 
 export async function getAllAllergensForOwner(ownerId: string) {
-  if (!ownerId) throw new Error("Missing ownerId")
   return db.query.allergens.findMany({
     where: (a, { eq }) => eq(a.ownerId, ownerId),
     orderBy: (a, { asc }) => [asc(a.name)],
   });
+}
+
+export async function getAllergenById(id: number, ownerId: string) {
+  const row = await db.query.allergens.findFirst({
+    where: and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)),
+  });
+  return row ?? null;
+}
+
+export async function createAllergen(
+  data: { name: string; casNumber?: string | null; maxConcentration?: string | null },
+  ownerId: string
+) {
+  const [row] = await db.insert(allergens).values({ ...data, ownerId }).returning();
+  return row;
+}
+
+export async function updateAllergen(
+  id: number,
+  patch: { name?: string; casNumber?: string | null; maxConcentration?: string | null },
+  ownerId: string
+) {
+  const [row] = await db
+    .update(allergens)
+    .set(patch)
+    .where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)))
+    .returning();
+  if (!row) throw new NotFoundError("Allergen not found");
+  return row;
+}
+
+export async function deleteAllergen(id: number, ownerId: string) {
+  const usage = await db
+    .select()
+    .from(ingredientAllergens)
+    .where(and(eq(ingredientAllergens.allergenId, id), eq(ingredientAllergens.ownerId, ownerId)));
+
+  if (usage.length > 0) {
+    throw new ConflictError("Cannot delete: allergen is used in one or more ingredients.");
+  }
+
+  const [deleted] = await db
+    .delete(allergens)
+    .where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)))
+    .returning();
+
+  if (!deleted) throw new NotFoundError("Allergen not found");
 }
