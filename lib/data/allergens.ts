@@ -16,9 +16,9 @@ export async function getAllAllergensForOwner(ownerId: string) {
   });
 }
 
-export async function getAllergenById(id: number, ownerId: string) {
+export async function getAllergenById(id: number, ownerId: string | null) {
   const row = await db.query.allergens.findFirst({
-    where: and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)),
+    where: and(eq(allergens.id, id), ownerId ? eq(allergens.ownerId, ownerId) : undefined),
   });
   return row ?? null;
 }
@@ -42,22 +42,22 @@ export async function createAllergen(
 export async function updateAllergen(
   id: number,
   patch: { name?: string; casNumber?: string | null; maxConcentration?: string | number | null },
-  ownerId: string
+  ownerId: string | null
 ) {
   const [row] = await db
     .update(allergens)
     .set({ ...patch, maxConcentration: toNumericString(patch.maxConcentration) })
-    .where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)))
+    .where(and(eq(allergens.id, id), ownerId ? eq(allergens.ownerId, ownerId) : undefined))
     .returning();
   if (!row) throw new NotFoundError("Allergen not found");
   return row;
 }
 
-export async function deleteAllergen(id: number, ownerId: string) {
+export async function deleteAllergen(id: number, ownerId: string | null) {
   const usage = await db
     .select()
     .from(ingredientAllergens)
-    .where(and(eq(ingredientAllergens.allergenId, id), eq(ingredientAllergens.ownerId, ownerId)));
+    .where(and(eq(ingredientAllergens.allergenId, id), ownerId ? eq(ingredientAllergens.ownerId, ownerId) : undefined));
 
   if (usage.length > 0) {
     throw new ConflictError("Cannot delete: allergen is used in one or more ingredients.");
@@ -65,7 +65,7 @@ export async function deleteAllergen(id: number, ownerId: string) {
 
   const [deleted] = await db
     .delete(allergens)
-    .where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)))
+    .where(and(eq(allergens.id, id), ownerId ? eq(allergens.ownerId, ownerId) : undefined))
     .returning();
 
   if (!deleted) throw new NotFoundError("Allergen not found");

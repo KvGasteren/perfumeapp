@@ -63,9 +63,9 @@ export async function getAllIngredientsForOwner(ownerId: string) {
 
 // ── Single ────────────────────────────────────────────────────────────────────
 
-export async function getIngredientById(id: number, ownerId: string) {
+export async function getIngredientById(id: number, ownerId: string | null) {
   const row = await db.query.ingredients.findFirst({
-    where: and(eq(ingredients.id, id), eq(ingredients.ownerId, ownerId)),
+    where: and(eq(ingredients.id, id), ownerId ? eq(ingredients.ownerId, ownerId) : undefined),
   });
   return row ?? null;
 }
@@ -77,21 +77,21 @@ export async function createIngredient(name: string, ownerId: string) {
   return row;
 }
 
-export async function updateIngredient(id: number, name: string, ownerId: string) {
+export async function updateIngredient(id: number, name: string, ownerId: string | null) {
   const [row] = await db
     .update(ingredients)
     .set({ name })
-    .where(and(eq(ingredients.id, id), eq(ingredients.ownerId, ownerId)))
+    .where(and(eq(ingredients.id, id), ownerId ? eq(ingredients.ownerId, ownerId) : undefined))
     .returning();
   if (!row) throw new NotFoundError("Ingredient not found");
   return row;
 }
 
-export async function deleteIngredient(id: number, ownerId: string) {
+export async function deleteIngredient(id: number, ownerId: string | null) {
   const usage = await db
     .select()
     .from(formulaIngredients)
-    .where(and(eq(formulaIngredients.ingredientId, id), eq(formulaIngredients.ownerId, ownerId)));
+    .where(and(eq(formulaIngredients.ingredientId, id), ownerId ? eq(formulaIngredients.ownerId, ownerId) : undefined));
 
   if (usage.length > 0) {
     throw new ConflictError("Cannot delete: ingredient is used in one or more formulas.");
@@ -99,7 +99,7 @@ export async function deleteIngredient(id: number, ownerId: string) {
 
   const [deleted] = await db
     .delete(ingredients)
-    .where(and(eq(ingredients.id, id), eq(ingredients.ownerId, ownerId)))
+    .where(and(eq(ingredients.id, id), ownerId ? eq(ingredients.ownerId, ownerId) : undefined))
     .returning();
 
   if (!deleted) throw new NotFoundError("Ingredient not found");
@@ -107,7 +107,7 @@ export async function deleteIngredient(id: number, ownerId: string) {
 
 // ── Allergen links ────────────────────────────────────────────────────────────
 
-export async function getIngredientAllergens(ingredientId: number, ownerId: string) {
+export async function getIngredientAllergens(ingredientId: number, ownerId: string | null) {
   return db
     .select({
       allergenId: allergens.id,
@@ -121,8 +121,8 @@ export async function getIngredientAllergens(ingredientId: number, ownerId: stri
     .where(
       and(
         eq(ingredientAllergens.ingredientId, ingredientId),
-        eq(ingredientAllergens.ownerId, ownerId),
-        eq(allergens.ownerId, ownerId)
+        ownerId ? eq(ingredientAllergens.ownerId, ownerId) : undefined,
+        ownerId ? eq(allergens.ownerId, ownerId) : undefined
       )
     )
     .orderBy(allergens.name);
@@ -132,23 +132,26 @@ export async function upsertIngredientAllergen(
   ingredientId: number,
   allergenId: number,
   concentration: number,
-  ownerId: string
+  ownerId: string | null
 ) {
   const ing = await db.query.ingredients.findFirst({
-    where: and(eq(ingredients.id, ingredientId), eq(ingredients.ownerId, ownerId)),
-    columns: { id: true },
+    where: and(eq(ingredients.id, ingredientId), ownerId ? eq(ingredients.ownerId, ownerId) : undefined),
+    columns: { id: true, ownerId: true },
   });
   if (!ing) throw new NotFoundError("Ingredient not found");
 
   const all = await db.query.allergens.findFirst({
-    where: and(eq(allergens.id, allergenId), eq(allergens.ownerId, ownerId)),
+    where: and(eq(allergens.id, allergenId), ownerId ? eq(allergens.ownerId, ownerId) : undefined),
     columns: { id: true, name: true },
   });
   if (!all) throw new NotFoundError("Allergen not found");
 
+  // Use the ingredient's actual ownerId for the insert (important for admin editing public data)
+  const effectiveOwnerId = ing.ownerId;
+
   const [row] = await db
     .insert(ingredientAllergens)
-    .values({ ingredientId, allergenId, concentration, ownerId })
+    .values({ ingredientId, allergenId, concentration, ownerId: effectiveOwnerId })
     .onConflictDoUpdate({
       target: [ingredientAllergens.ingredientId, ingredientAllergens.allergenId],
       set: { concentration },
@@ -161,10 +164,10 @@ export async function upsertIngredientAllergen(
 export async function deleteIngredientAllergen(
   ingredientId: number,
   allergenId: number,
-  ownerId: string
+  ownerId: string | null
 ) {
   const ing = await db.query.ingredients.findFirst({
-    where: and(eq(ingredients.id, ingredientId), eq(ingredients.ownerId, ownerId)),
+    where: and(eq(ingredients.id, ingredientId), ownerId ? eq(ingredients.ownerId, ownerId) : undefined),
     columns: { id: true },
   });
   if (!ing) throw new NotFoundError("Ingredient not found");
@@ -175,7 +178,7 @@ export async function deleteIngredientAllergen(
       and(
         eq(ingredientAllergens.ingredientId, ingredientId),
         eq(ingredientAllergens.allergenId, allergenId),
-        eq(ingredientAllergens.ownerId, ownerId)
+        ownerId ? eq(ingredientAllergens.ownerId, ownerId) : undefined
       )
     );
 }

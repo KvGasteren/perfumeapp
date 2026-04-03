@@ -20,9 +20,9 @@ export async function getAllFormulasForOwner(ownerId: string) {
 
 // ── Single ────────────────────────────────────────────────────────────────────
 
-export async function getFormulaById(id: number, ownerId: string) {
+export async function getFormulaById(id: number, ownerId: string | null) {
   const row = await db.query.formulas.findFirst({
-    where: and(eq(formulas.id, id), eq(formulas.ownerId, ownerId)),
+    where: and(eq(formulas.id, id), ownerId ? eq(formulas.ownerId, ownerId) : undefined),
   });
   return row ?? null;
 }
@@ -34,29 +34,29 @@ export async function createFormula(name: string, ownerId: string) {
   return row;
 }
 
-export async function updateFormula(id: number, name: string, ownerId: string) {
+export async function updateFormula(id: number, name: string, ownerId: string | null) {
   const [row] = await db
     .update(formulas)
     .set({ name })
-    .where(and(eq(formulas.id, id), eq(formulas.ownerId, ownerId)))
+    .where(and(eq(formulas.id, id), ownerId ? eq(formulas.ownerId, ownerId) : undefined))
     .returning();
   if (!row) throw new NotFoundError("Formula not found");
   return row;
 }
 
-export async function deleteFormula(id: number, ownerId: string) {
+export async function deleteFormula(id: number, ownerId: string | null) {
   const [deleted] = await db
     .delete(formulas)
-    .where(and(eq(formulas.id, id), eq(formulas.ownerId, ownerId)))
+    .where(and(eq(formulas.id, id), ownerId ? eq(formulas.ownerId, ownerId) : undefined))
     .returning();
   if (!deleted) throw new NotFoundError("Formula not found");
 }
 
 // ── Ingredient links ──────────────────────────────────────────────────────────
 
-export async function getFormulaIngredients(formulaId: number, ownerId: string) {
+export async function getFormulaIngredients(formulaId: number, ownerId: string | null) {
   const formula = await db.query.formulas.findFirst({
-    where: and(eq(formulas.id, formulaId), eq(formulas.ownerId, ownerId)),
+    where: and(eq(formulas.id, formulaId), ownerId ? eq(formulas.ownerId, ownerId) : undefined),
     columns: { id: true },
   });
   if (!formula) throw new NotFoundError("Formula not found");
@@ -72,8 +72,8 @@ export async function getFormulaIngredients(formulaId: number, ownerId: string) 
     .where(
       and(
         eq(formulaIngredients.formulaId, formulaId),
-        eq(formulaIngredients.ownerId, ownerId),
-        eq(ingredients.ownerId, ownerId)
+        ownerId ? eq(formulaIngredients.ownerId, ownerId) : undefined,
+        ownerId ? eq(ingredients.ownerId, ownerId) : undefined
       )
     )
     .orderBy(ingredients.name);
@@ -83,23 +83,26 @@ export async function upsertFormulaIngredient(
   formulaId: number,
   ingredientId: number,
   parts: number,
-  ownerId: string
+  ownerId: string | null
 ) {
   const formula = await db.query.formulas.findFirst({
-    where: and(eq(formulas.id, formulaId), eq(formulas.ownerId, ownerId)),
-    columns: { id: true },
+    where: and(eq(formulas.id, formulaId), ownerId ? eq(formulas.ownerId, ownerId) : undefined),
+    columns: { id: true, ownerId: true },
   });
   if (!formula) throw new NotFoundError("Formula not found");
 
   const ing = await db.query.ingredients.findFirst({
-    where: and(eq(ingredients.id, ingredientId), eq(ingredients.ownerId, ownerId)),
+    where: and(eq(ingredients.id, ingredientId), ownerId ? eq(ingredients.ownerId, ownerId) : undefined),
     columns: { id: true, name: true },
   });
   if (!ing) throw new NotFoundError("Ingredient not found");
 
+  // Use the formula's actual ownerId for the insert (important for admin editing public data)
+  const effectiveOwnerId = formula.ownerId;
+
   const [row] = await db
     .insert(formulaIngredients)
-    .values({ formulaId, ingredientId, parts, ownerId })
+    .values({ formulaId, ingredientId, parts, ownerId: effectiveOwnerId })
     .onConflictDoUpdate({
       target: [formulaIngredients.formulaId, formulaIngredients.ingredientId, formulaIngredients.ownerId],
       set: { parts },
@@ -112,10 +115,10 @@ export async function upsertFormulaIngredient(
 export async function deleteFormulaIngredient(
   formulaId: number,
   ingredientId: number,
-  ownerId: string
+  ownerId: string | null
 ) {
   const formula = await db.query.formulas.findFirst({
-    where: and(eq(formulas.id, formulaId), eq(formulas.ownerId, ownerId)),
+    where: and(eq(formulas.id, formulaId), ownerId ? eq(formulas.ownerId, ownerId) : undefined),
     columns: { id: true },
   });
   if (!formula) throw new NotFoundError("Formula not found");
@@ -126,7 +129,7 @@ export async function deleteFormulaIngredient(
       and(
         eq(formulaIngredients.formulaId, formulaId),
         eq(formulaIngredients.ingredientId, ingredientId),
-        eq(formulaIngredients.ownerId, ownerId)
+        ownerId ? eq(formulaIngredients.ownerId, ownerId) : undefined
       )
     );
 }

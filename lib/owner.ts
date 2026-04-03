@@ -10,3 +10,12 @@ export async function isAdmin(): Promise<boolean> {
   const user = await currentUser();
   return user?.publicMetadata?.role === "admin";
 }
+
+/**
+ * Returns the ownerId to use as a query filter.
+ * Admins get null (= no owner restriction), regular users get their own ID.
+ */
+export async function getOwnerFilter(): Promise<string | null> {
+  const [ownerId, admin] = await Promise.all([getOwnerId(), isAdmin()]);
+  return admin ? null : ownerId;
+}
