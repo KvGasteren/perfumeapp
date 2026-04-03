@@ -3,6 +3,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ToastProvider } from "@/components/ui/toast/ToastProvider";
 import { AppNav } from "@/components/AppNav";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 
 export const metadata = {
   title: "Perfume for Frank Bloem",
@@ -17,7 +18,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ToastProvider>
             <div className="mx-auto flex min-h-dvh max-w-6xl gap-6 p-4 md:p-6 flex-col lg:flex-row">
               <AppNav />
-              <main className="flex-1">{children}</main>
+              <div className="flex-1 flex flex-col gap-4">
+                <ImpersonationBanner />
+                <main className="flex-1">{children}</main>
+              </div>
             </div>
           </ToastProvider>
         </body>
