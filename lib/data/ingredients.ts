@@ -12,8 +12,8 @@ export type IngredientWithAllergenSummary = {
   allergenCount: number;
 };
 
-export async function getIngredientsWithAllergenSummary(): Promise<IngredientWithAllergenSummary[]> {
-  const allIngredients = await db.select().from(ingredients);
+export async function getIngredientsWithAllergenSummary(ownerId: string): Promise<IngredientWithAllergenSummary[]> {
+  const allIngredients = await db.select().from(ingredients).where(eq(ingredients.ownerId, ownerId));
 
   const links = await db
     .select({
@@ -23,7 +23,8 @@ export async function getIngredientsWithAllergenSummary(): Promise<IngredientWit
       allergenName: allergens.name,
     })
     .from(ingredientAllergens)
-    .leftJoin(allergens, eq(ingredientAllergens.allergenId, allergens.id));
+    .leftJoin(allergens, eq(ingredientAllergens.allergenId, allergens.id))
+    .where(eq(ingredientAllergens.ownerId, ownerId));
 
   const byIngredient = new Map<number, IngredientWithAllergenSummary>();
 
