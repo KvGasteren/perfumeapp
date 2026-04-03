@@ -7,7 +7,7 @@ import { NotFoundError, ConflictError } from "@/lib/data/errors";
 const patchSchema = z.object({
   name: z.string().min(1),
   casNumber: z.string().optional().nullable(),
-  maxConcentration: z.string().optional().nullable(),
+  maxConcentration: z.union([z.number(), z.string()]).optional().nullable(),
 });
 
 export async function GET(

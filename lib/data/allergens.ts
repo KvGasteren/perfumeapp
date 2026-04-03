@@ -17,22 +17,30 @@ export async function getAllergenById(id: number, ownerId: string) {
   return row ?? null;
 }
 
+function toNumericString(v: string | number | null | undefined): string | null | undefined {
+  if (v == null) return v as null | undefined;
+  return String(v);
+}
+
 export async function createAllergen(
-  data: { name: string; casNumber?: string | null; maxConcentration?: string | null },
+  data: { name: string; casNumber?: string | null; maxConcentration?: string | number | null },
   ownerId: string
 ) {
-  const [row] = await db.insert(allergens).values({ ...data, ownerId }).returning();
+  const [row] = await db
+    .insert(allergens)
+    .values({ ...data, maxConcentration: toNumericString(data.maxConcentration), ownerId })
+    .returning();
   return row;
 }
 
 export async function updateAllergen(
   id: number,
-  patch: { name?: string; casNumber?: string | null; maxConcentration?: string | null },
+  patch: { name?: string; casNumber?: string | null; maxConcentration?: string | number | null },
   ownerId: string
 ) {
   const [row] = await db
     .update(allergens)
-    .set(patch)
+    .set({ ...patch, maxConcentration: toNumericString(patch.maxConcentration) })
     .where(and(eq(allergens.id, id), eq(allergens.ownerId, ownerId)))
     .returning();
   if (!row) throw new NotFoundError("Allergen not found");
