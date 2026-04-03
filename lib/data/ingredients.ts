@@ -1,6 +1,8 @@
 import { db } from "@/db";
 import { ingredients, ingredientAllergens, allergens, formulaIngredients } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
+
+const PUBLIC = "public";
 import { NotFoundError, ConflictError } from "./errors";
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -13,8 +15,10 @@ export type IngredientWithAllergenSummary = {
 };
 
 export async function getIngredientsWithAllergenSummary(ownerId: string): Promise<IngredientWithAllergenSummary[]> {
-  const allIngredients = await db.select().from(ingredients).where(eq(ingredients.ownerId, ownerId));
+  const ownerFilter = or(eq(ingredients.ownerId, ownerId), eq(ingredients.ownerId, PUBLIC));
+  const allIngredients = await db.select().from(ingredients).where(ownerFilter);
 
+  const linkFilter = or(eq(ingredientAllergens.ownerId, ownerId), eq(ingredientAllergens.ownerId, PUBLIC));
   const links = await db
     .select({
       ingredientId: ingredientAllergens.ingredientId,
@@ -24,7 +28,7 @@ export async function getIngredientsWithAllergenSummary(ownerId: string): Promis
     })
     .from(ingredientAllergens)
     .leftJoin(allergens, eq(ingredientAllergens.allergenId, allergens.id))
-    .where(eq(ingredientAllergens.ownerId, ownerId));
+    .where(linkFilter);
 
   const byIngredient = new Map<number, IngredientWithAllergenSummary>();
 
@@ -56,7 +60,7 @@ export async function getAllIngredientsAdmin() {
 
 export async function getAllIngredientsForOwner(ownerId: string) {
   return db.query.ingredients.findMany({
-    where: eq(ingredients.ownerId, ownerId),
+    where: (i, { or, eq }) => or(eq(i.ownerId, ownerId), eq(i.ownerId, PUBLIC)),
     orderBy: (i, { asc }) => [asc(i.name)],
   });
 }
@@ -65,7 +69,7 @@ export async function getAllIngredientsForOwner(ownerId: string) {
 
 export async function getIngredientById(id: number, ownerId: string | null) {
   const row = await db.query.ingredients.findFirst({
-    where: and(eq(ingredients.id, id), ownerId ? eq(ingredients.ownerId, ownerId) : undefined),
+    where: and(eq(ingredients.id, id), ownerId ? or(eq(ingredients.ownerId, ownerId), eq(ingredients.ownerId, PUBLIC)) : undefined),
   });
   return row ?? null;
 }
@@ -121,8 +125,8 @@ export async function getIngredientAllergens(ingredientId: number, ownerId: stri
     .where(
       and(
         eq(ingredientAllergens.ingredientId, ingredientId),
-        ownerId ? eq(ingredientAllergens.ownerId, ownerId) : undefined,
-        ownerId ? eq(allergens.ownerId, ownerId) : undefined
+        ownerId ? or(eq(ingredientAllergens.ownerId, ownerId), eq(ingredientAllergens.ownerId, PUBLIC)) : undefined,
+        ownerId ? or(eq(allergens.ownerId, ownerId), eq(allergens.ownerId, PUBLIC)) : undefined
       )
     )
     .orderBy(allergens.name);
