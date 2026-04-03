@@ -9,13 +9,13 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const rows = await getAllAllergensForOwner(ownerId);
   return Response.json(rows);
 }
 
 export async function POST(req: Request) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const parsed = createSchema.parse(await req.json());
   const row = await createAllergen(parsed, ownerId);
   return Response.json(row, { status: 201 });

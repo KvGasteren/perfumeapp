@@ -13,7 +13,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   const ing = await getIngredientById(id, ownerId);
   if (!ing) return new Response("Ingredient not found", { status: 404 });
@@ -25,7 +25,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   const { allergenId, concentration } = upsertSchema.parse(await req.json());
   try {

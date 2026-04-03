@@ -16,7 +16,7 @@ export default async function FormulaDetailPage({
 
   if (Number.isNaN(formulaId)) notFound();
 
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
 
   const [formula, ingredientsInFormula, allIngredients] = await Promise.all([
     getFormulaById(formulaId, ownerId),

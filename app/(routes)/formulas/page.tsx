@@ -6,7 +6,7 @@ import { FormulasClient } from "./_client";
 export const dynamic = "force-dynamic";
 
 export default async function FormulasPage() {
-  const items = await getAllFormulasForOwner(getOwnerId());
+  const items = await getAllFormulasForOwner(await getOwnerId());
 
   return (
     <>

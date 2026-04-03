@@ -10,7 +10,7 @@ export async function GET(
   _: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   const row = await getIngredientById(id, ownerId);
   if (!row) return new Response("Not found", { status: 404 });
@@ -21,7 +21,7 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   const { name } = patchSchema.parse(await req.json());
   try {
@@ -37,7 +37,7 @@ export async function DELETE(
   _: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   try {
     await deleteIngredient(id, ownerId);

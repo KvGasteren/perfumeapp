@@ -7,7 +7,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string; ingredientId: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const { id, ingredientId } = await parseFormulaIngredientIds(params);
   try {
     await deleteFormulaIngredient(id, ingredientId, ownerId);

@@ -13,7 +13,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   try {
     const rows = await getFormulaIngredients(id, ownerId);
@@ -28,7 +28,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const id = await parseId(params);
   const { ingredientId, parts } = upsertSchema.parse(await req.json());
   try {

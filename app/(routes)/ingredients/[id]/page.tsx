@@ -13,7 +13,7 @@ export default async function IngredientPage({
 
   if (Number.isNaN(ingredientId)) notFound();
 
-  const ownerId = getOwnerId();
+  const ownerId = await getOwnerId();
   const [ingredient, allergens] = await Promise.all([
     getIngredientById(ingredientId, ownerId),
     getIngredientAllergens(ingredientId, ownerId),

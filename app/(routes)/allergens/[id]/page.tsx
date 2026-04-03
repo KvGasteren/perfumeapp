@@ -13,7 +13,7 @@ export default async function AllergenPage({
 
   if (Number.isNaN(allergenId)) notFound();
 
-  const allergen = await getAllergenById(allergenId, getOwnerId());
+  const allergen = await getAllergenById(allergenId, await getOwnerId());
   if (!allergen) notFound();
 
   return <AllergenDetailClient allergen={allergen} />;

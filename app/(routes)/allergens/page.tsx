@@ -6,7 +6,7 @@ import { AllergensClient } from "./_client";
 export const dynamic = "force-dynamic";
 
 export default async function AllergensPage() {
-  const items = await getAllAllergensForOwner(getOwnerId());
+  const items = await getAllAllergensForOwner(await getOwnerId());
 
   return (
     <>
