@@ -1,7 +1,3 @@
-import { getBaseUrl } from "@/lib/getBaseUrl";
-
-const baseUrl = getBaseUrl();
-
 async function json<T>(res: Response): Promise<T> {
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;
@@ -16,10 +12,10 @@ async function json<T>(res: Response): Promise<T> {
 
 export const api = {
   get: async <T>(path: string) =>
-    json<T>(await fetch(`${baseUrl}${path}`, { cache: "no-store" })),
+    json<T>(await fetch(path, { cache: "no-store" })),
   post: async <T>(path: string, body?: unknown) =>
     json<T>(
-      await fetch(`${baseUrl}${path}`, {
+      await fetch(path, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -27,14 +23,14 @@ export const api = {
     ),
   patch: async <T>(path: string, body?: unknown) =>
     json<T>(
-      await fetch(`${baseUrl}${path}`, {
+      await fetch(path, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
     ),
   del: async (path: string) => {
-    const res = await fetch(`${baseUrl}${path}`, { method: "DELETE" });
+    const res = await fetch(path, { method: "DELETE" });
     if (!res.ok) {
       let msg = `HTTP ${res.status}`;
       try {
