@@ -1,23 +1,7 @@
-// app/(routes)/ingredients/[id]/page.tsx
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { notFound } from "next/navigation";
+import { getIngredientById, getIngredientAllergens } from "@/lib/data/ingredients";
+import { getOwnerId } from "@/lib/owner";
 import IngredientDetailClient from "./_client";
-
-type Ingredient = {
-  id: number;
-  name: string;
-  ownerId: string;
-};
-
-type AllergenLink = {
-  allergenId: number;
-  concentration: number;
-  // new fields from the joined endpoint
-  allergenName?: string | null;
-  casNumber?: string | null;
-  maxConcentration?: string | null;
-  // older backend might still return name
-  name?: string | null;
-};
 
 export default async function IngredientPage({
   params,
@@ -27,29 +11,15 @@ export default async function IngredientPage({
   const { id } = await params;
   const ingredientId = Number(id);
 
-  const baseUrl = getBaseUrl();
+  if (Number.isNaN(ingredientId)) notFound();
 
-  // fetch both ingredient and its allergens from the API
-  const [ingredientRes, allergensRes] = await Promise.all([
-    fetch(`${baseUrl}/api/ingredients/${ingredientId}`, {
-      cache: "no-store",
-    }),
-    fetch(`${baseUrl}/api/ingredients/${ingredientId}/allergens`, {
-      cache: "no-store",
-    }),
+  const ownerId = getOwnerId();
+  const [ingredient, allergens] = await Promise.all([
+    getIngredientById(ingredientId, ownerId),
+    getIngredientAllergens(ingredientId, ownerId),
   ]);
 
-  if (!ingredientRes.ok) {
-    // you can swap this for notFound()
-    return <div className="p-4 text-sm text-red-500">Ingredient not found.</div>;
-  }
+  if (!ingredient) notFound();
 
-  const ingredient: Ingredient = await ingredientRes.json();
-  const allergens: AllergenLink[] = allergensRes.ok
-    ? await allergensRes.json()
-    : [];
-
-  return (
-    <IngredientDetailClient ingredient={ingredient} allergens={allergens} />
-  );
+  return <IngredientDetailClient ingredient={ingredient} allergens={allergens} />;
 }

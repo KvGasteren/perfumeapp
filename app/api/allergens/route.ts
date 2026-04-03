@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { db } from "@/db";
-import { allergens } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
+import { getAllAllergensForOwner, createAllergen } from "@/lib/data/allergens";
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -13,25 +10,13 @@ const createSchema = z.object({
 
 export async function GET() {
   const ownerId = getOwnerId();
-  const rows = await db.query.allergens.findMany({
-    where: eq(allergens.ownerId, ownerId),
-    orderBy: (i: { name: any }, { asc }: any) => [asc(i.name)],
-  });
+  const rows = await getAllAllergensForOwner(ownerId);
   return Response.json(rows);
 }
 
 export async function POST(req: Request) {
   const ownerId = getOwnerId();
-  const body = await req.json();
-  const parsed = createSchema.parse(body);
-  const [row] = await db
-    .insert(allergens)
-    .values({
-      name: parsed.name,
-      ownerId,
-      casNumber: parsed.casNumber,
-      maxConcentration: parsed.maxConcentration,
-    })
-    .returning();
+  const parsed = createSchema.parse(await req.json());
+  const row = await createAllergen(parsed, ownerId);
   return Response.json(row, { status: 201 });
 }

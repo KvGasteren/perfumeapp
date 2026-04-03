@@ -1,25 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { db } from "@/db";
-import { ingredients } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
+import { getAllIngredientsForOwner, createIngredient } from "@/lib/data/ingredients";
 
 const createSchema = z.object({ name: z.string().min(1) });
 
 export async function GET() {
   const ownerId = getOwnerId();
-  const rows = await db.query.ingredients.findMany({
-    where: eq(ingredients.ownerId, ownerId),
-    orderBy: (i: { name: any; }, { asc }: any) => [asc(i.name)],
-  });
+  const rows = await getAllIngredientsForOwner(ownerId);
   return Response.json(rows);
 }
 
 export async function POST(req: Request) {
   const ownerId = getOwnerId();
-  const body = await req.json();
-  const { name } = createSchema.parse(body);
-  const [row] = await db.insert(ingredients).values({ name, ownerId }).returning();
+  const { name } = createSchema.parse(await req.json());
+  const row = await createIngredient(name, ownerId);
   return Response.json(row, { status: 201 });
 }

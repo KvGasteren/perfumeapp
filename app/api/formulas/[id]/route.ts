@@ -1,9 +1,8 @@
-import { db } from "@/db";
-import { formulas, formulaIngredients } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getOwnerId } from "@/lib/owner";
 import { parseId } from "@/lib/params";
+import { getFormulaById, updateFormula, deleteFormula } from "@/lib/data/formulas";
+import { NotFoundError } from "@/lib/data/errors";
 
 const patchSchema = z.object({ name: z.string().min(1) });
 
@@ -13,9 +12,7 @@ export async function GET(
 ) {
   const ownerId = getOwnerId();
   const id = await parseId(params);
-  const row = await db.query.formulas.findFirst({
-    where: and(eq(formulas.id, id), eq(formulas.ownerId, ownerId)),
-  });
+  const row = await getFormulaById(id, ownerId);
   if (!row) return new Response("Not found", { status: 404 });
   return Response.json(row);
 }
@@ -26,17 +23,14 @@ export async function PATCH(
 ) {
   const ownerId = getOwnerId();
   const id = await parseId(params);
-
   const { name } = patchSchema.parse(await req.json());
-
-  const [row] = await db
-    .update(formulas)
-    .set({ name })
-    .where(and(eq(formulas.id, id), eq(formulas.ownerId, ownerId)))
-    .returning();
-
-  if (!row) return new Response("Not found", { status: 404 });
-  return Response.json(row);
+  try {
+    const row = await updateFormula(id, name, ownerId);
+    return Response.json(row);
+  } catch (e) {
+    if (e instanceof NotFoundError) return new Response(e.message, { status: 404 });
+    throw e;
+  }
 }
 
 export async function DELETE(
@@ -45,12 +39,11 @@ export async function DELETE(
 ) {
   const ownerId = getOwnerId();
   const id = await parseId(params);
-
-  const [deleted] = await db
-    .delete(formulas)
-    .where(and(eq(formulas.id, id), eq(formulas.ownerId, ownerId)))
-    .returning();
-
-  if (!deleted) return new Response("Not found", { status: 404 });
-  return new Response(null, { status: 204 });
+  try {
+    await deleteFormula(id, ownerId);
+    return new Response(null, { status: 204 });
+  } catch (e) {
+    if (e instanceof NotFoundError) return new Response(e.message, { status: 404 });
+    throw e;
+  }
 }

@@ -1,14 +1,7 @@
-// app/(routes)/allergens/[id]/page.tsx
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { notFound } from "next/navigation";
+import { getAllergenById } from "@/lib/data/allergens";
+import { getOwnerId } from "@/lib/owner";
 import AllergenDetailClient from "./_client";
-
-type Allergen = {
-  id: number;
-  name: string;
-  ownerId: string;
-  casNumber?: string | null;
-  maxConcentration?: string | null;
-};
 
 export default async function AllergenPage({
   params,
@@ -18,17 +11,10 @@ export default async function AllergenPage({
   const { id } = await params;
   const allergenId = Number(id);
 
-  const baseUrl = getBaseUrl();
+  if (Number.isNaN(allergenId)) notFound();
 
-  const res = await fetch(`${baseUrl}/api/allergens/${allergenId}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    return <div className="p-4 text-sm text-red-500">Allergen not found.</div>;
-  }
-
-  const allergen: Allergen = await res.json();
+  const allergen = await getAllergenById(allergenId, getOwnerId());
+  if (!allergen) notFound();
 
   return <AllergenDetailClient allergen={allergen} />;
 }

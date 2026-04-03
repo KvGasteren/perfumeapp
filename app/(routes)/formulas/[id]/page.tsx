@@ -1,8 +1,8 @@
-import { Formulas } from "@/services/formulas";
-import { Ingredients } from "@/services/ingredients";
-import { FormulaEditorClient } from "./_client";
 import { notFound } from "next/navigation";
-import { getBaseUrl } from "@/lib/getBaseUrl";
+import { getFormulaById, getFormulaIngredients } from "@/lib/data/formulas";
+import { getAllIngredientsForOwner, getIngredientAllergens } from "@/lib/data/ingredients";
+import { getOwnerId } from "@/lib/owner";
+import { FormulaEditorClient } from "./_client";
 
 export const dynamic = "force-dynamic";
 
@@ -14,49 +14,33 @@ export default async function FormulaDetailPage({
   const { id } = await params;
   const formulaId = Number(id);
 
-  if (Number.isNaN(formulaId)) {
-    notFound();
-  }
+  if (Number.isNaN(formulaId)) notFound();
+
+  const ownerId = getOwnerId();
 
   const [formula, ingredientsInFormula, allIngredients] = await Promise.all([
-    Formulas.byId(formulaId),
-    Formulas.listIngredients(formulaId),
-    Ingredients.list(),
+    getFormulaById(formulaId, ownerId),
+    getFormulaIngredients(formulaId, ownerId),
+    getAllIngredientsForOwner(ownerId),
   ]);
 
-  // collect ingredientIds that are actually in this formula
+  if (!formula) notFound();
+
   const ingredientIds = ingredientsInFormula
     .map((r) => r.ingredientId)
     .filter((id): id is number => typeof id === "number");
 
-  // fetch allergens for those ingredients on the server
-  // we mirror what you did in the client, but here we do it once
-  const base = getBaseUrl();
-  
-  const allergenResponses = await Promise.all(
-    ingredientIds.map(async (ingId) => {
-      const res = await fetch(`${base}/api/ingredients/${ingId}/allergens`, {
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        // if one fails, just return empty list for that ingredient
-        return { ingId, allergens: [] as Array<{ allergenId: number; allergenName?: string; concentration: number }> };
-      }
-      const data = (await res.json()) as Array<{
-        allergenId: number;
-        allergenName?: string;
-        concentration: number;
-      }>;
-      return { ingId, allergens: data };
-    })
+  const allergenResults = await Promise.all(
+    ingredientIds.map((ingId) =>
+      getIngredientAllergens(ingId, ownerId).then((allergens) => ({ ingId, allergens }))
+    )
   );
 
-  // shape it like the client expects: Record<number, Array<...>>
   const initialAllergenCache: Record<
     number,
     Array<{ allergenId: number; allergenName?: string; concentration: number }>
   > = {};
-  for (const { ingId, allergens } of allergenResponses) {
+  for (const { ingId, allergens } of allergenResults) {
     initialAllergenCache[ingId] = allergens;
   }
 
