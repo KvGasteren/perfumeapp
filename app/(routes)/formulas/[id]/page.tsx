@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getFormulaById, getFormulaIngredients } from "@/lib/data/formulas";
 import { getAllIngredientsForOwner, getIngredientAllergens } from "@/lib/data/ingredients";
-import { getOwnerId } from "@/lib/owner";
+import { getOwnerId, getOwnerFilter } from "@/lib/owner";
 import { FormulaEditorClient } from "./_client";
 
 export const dynamic = "force-dynamic";
@@ -16,11 +16,11 @@ export default async function FormulaDetailPage({
 
   if (Number.isNaN(formulaId)) notFound();
 
-  const ownerId = await getOwnerId();
+  const [ownerId, ownerFilter] = await Promise.all([getOwnerId(), getOwnerFilter()]);
 
   const [formula, ingredientsInFormula, allIngredients] = await Promise.all([
-    getFormulaById(formulaId, ownerId),
-    getFormulaIngredients(formulaId, ownerId),
+    getFormulaById(formulaId, ownerFilter),
+    getFormulaIngredients(formulaId, ownerFilter),
     getAllIngredientsForOwner(ownerId),
   ]);
 
@@ -32,7 +32,7 @@ export default async function FormulaDetailPage({
 
   const allergenResults = await Promise.all(
     ingredientIds.map((ingId) =>
-      getIngredientAllergens(ingId, ownerId).then((allergens) => ({ ingId, allergens }))
+      getIngredientAllergens(ingId, ownerFilter).then((allergens) => ({ ingId, allergens }))
     )
   );
 

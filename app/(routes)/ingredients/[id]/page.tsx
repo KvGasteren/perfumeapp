@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getIngredientById, getIngredientAllergens } from "@/lib/data/ingredients";
-import { getOwnerId } from "@/lib/owner";
+import { getOwnerFilter } from "@/lib/owner";
 import IngredientDetailClient from "./_client";
 
 export default async function IngredientPage({
@@ -13,7 +13,7 @@ export default async function IngredientPage({
 
   if (Number.isNaN(ingredientId)) notFound();
 
-  const ownerId = await getOwnerId();
+  const ownerId = await getOwnerFilter();
   const [ingredient, allergens] = await Promise.all([
     getIngredientById(ingredientId, ownerId),
     getIngredientAllergens(ingredientId, ownerId),

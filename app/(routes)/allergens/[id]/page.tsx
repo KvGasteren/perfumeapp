@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getAllergenById } from "@/lib/data/allergens";
-import { getOwnerId } from "@/lib/owner";
+import { getOwnerFilter } from "@/lib/owner";
 import AllergenDetailClient from "./_client";
 
 export default async function AllergenPage({
@@ -13,7 +13,7 @@ export default async function AllergenPage({
 
   if (Number.isNaN(allergenId)) notFound();
 
-  const allergen = await getAllergenById(allergenId, await getOwnerId());
+  const allergen = await getAllergenById(allergenId, await getOwnerFilter());
   if (!allergen) notFound();
 
   return <AllergenDetailClient allergen={allergen} />;
