@@ -3,6 +3,12 @@ import { allergens, ingredientAllergens } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { NotFoundError, ConflictError } from "./errors";
 
+export async function getAllAllergensAdmin() {
+  return db.query.allergens.findMany({
+    orderBy: (a, { asc }) => [asc(a.ownerId), asc(a.name)],
+  });
+}
+
 export async function getAllAllergensForOwner(ownerId: string) {
   return db.query.allergens.findMany({
     where: (a, { eq }) => eq(a.ownerId, ownerId),

@@ -48,6 +48,12 @@ export async function getIngredientsWithAllergenSummary(ownerId: string): Promis
   return Array.from(byIngredient.values());
 }
 
+export async function getAllIngredientsAdmin() {
+  return db.query.ingredients.findMany({
+    orderBy: (i, { asc }) => [asc(i.ownerId), asc(i.name)],
+  });
+}
+
 export async function getAllIngredientsForOwner(ownerId: string) {
   return db.query.ingredients.findMany({
     where: eq(ingredients.ownerId, ownerId),

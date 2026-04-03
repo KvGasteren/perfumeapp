@@ -5,6 +5,12 @@ import { NotFoundError } from "./errors";
 
 // ── List ──────────────────────────────────────────────────────────────────────
 
+export async function getAllFormulasAdmin() {
+  return db.query.formulas.findMany({
+    orderBy: (f, { asc }) => [asc(f.ownerId), asc(f.name)],
+  });
+}
+
 export async function getAllFormulasForOwner(ownerId: string) {
   return db.query.formulas.findMany({
     where: eq(formulas.ownerId, ownerId),
