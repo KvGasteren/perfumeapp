@@ -16,7 +16,7 @@ Built as a **production-ready rewrite** of an existing app, optimized for **serv
 - Safe deletion: ingredients used in formulas cannot be removed
 
 ### Allergens
-- Central allergen registry
+- Central allergen registry with CAS numbers and concentration limits
 - Automatic allergen summaries per formula
 - Client-side calculations matching regulatory requirements
 
@@ -25,9 +25,12 @@ Built as a **production-ready rewrite** of an existing app, optimized for **serv
 - View detailed breakdowns including allergen totals
 - Edit locally and persist changes in a single save action
 
-### Authentication
+### Authentication & Access Control
 - Email/password sign-in via Clerk
 - Per-user data isolation — each user only sees their own formulas and ingredients
+- Admin role (set via Clerk `publicMetadata`) with full CRUD access across all users
+- Admin user impersonation — view and edit the app exactly as any user would see it
+- Impersonation banner shown at all times when viewing as another user
 
 ### UX & Reliability
 - Clean, minimal interface
@@ -44,6 +47,7 @@ This project demonstrates:
 - Designing a **serverless-friendly backend** without a separate API server
 - Applying **real-world domain rules** (guarded deletes, cascades, constraints)
 - Building a maintainable full-stack application using **TypeScript end-to-end**
+- Implementing **multi-user auth and admin oversight** with Clerk
 
 It is intended as a realistic portfolio project: not a toy app, but a structured CRUD system with meaningful business logic.
 
@@ -57,14 +61,17 @@ It is intended as a realistic portfolio project: not a toy app, but a structured
 - Tailwind CSS
 - Server Components & Route Handlers
 
+**Auth**
+- Clerk (email/password, role-based access, user impersonation)
+
 **Database**
 - PostgreSQL (Neon, EU region)
 - Drizzle ORM & migrations
 
 **Validation & Tooling**
 - Zod (shared schemas)
-- ESLint / Prettier
-- Playwright & Vitest (planned / partially implemented)
+- ESLint
+- Playwright & Vitest (planned)
 
 **Hosting**
 - Vercel (Hobby tier, serverless)
@@ -76,21 +83,39 @@ It is intended as a realistic portfolio project: not a toy app, but a structured
 
 ```text
 /app
-  /ingredients
-  /allergens
-  /formulas
+  /(routes)
+    /ingredients      # list + detail pages (server + client components)
+    /allergens
+    /formulas
+    /admin            # admin user list + impersonation
   /api
+    /ingredients      # REST-style route handlers
+    /allergens
+    /formulas
+    /admin/impersonate
 /db
-  /schema        # Drizzle schema
+  schema.ts           # Drizzle schema
+  migrate-owner.ts    # one-off data migration script
   /migrations
-/lib             # shared utils & Zod schemas
-/components
+/lib
+  /data               # server-only data functions (one per entity)
+    ingredients.ts
+    allergens.ts
+    formulas.ts
+    errors.ts
+  owner.ts            # getOwnerId / getOwnerFilter / isAdmin
+  zodSchemas.ts       # shared Zod types
+/services             # client-side API helpers (used by client components only)
+/components           # shared UI components
 ```
 
 ### Key architectural choices
 
+- **Data layer** (`lib/data/*`) — all DB logic lives here; API routes and server pages both call these directly
+- **API routes** — thin wrappers: parse request → call data fn → return JSON
+- **Server components** — call `lib/data/*` directly, no self-fetch via HTTP
+- **Client components** — call `services/*` which fetch the API routes
 - Single Next.js application (no monorepo, no separate backend)
-- Route Handlers for REST-style APIs
 - Strict database constraints instead of relying only on frontend logic
 - Edit locally → save once UX to reduce unnecessary database writes
 
@@ -99,6 +124,7 @@ It is intended as a realistic portfolio project: not a toy app, but a structured
 ## Business Rules
 
 - An ingredient **cannot be deleted** if it is used in a formula
+- An allergen **cannot be deleted** if it is linked to an ingredient
 - Deleting an ingredient **automatically removes** its allergen links
 - Allergen totals are calculated deterministically on the client
 
@@ -130,20 +156,45 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
 CLERK_SECRET_KEY=sk_...
 ```
 
+### Database commands
+
+```bash
+pnpm db:generate   # generate Drizzle migrations
+pnpm db:migrate    # run migrations
+pnpm db:studio     # open Drizzle Studio
+```
+
+### Data migration
+
+To reassign data from `ownerId = 'public'` to a real user:
+
+```bash
+pnpm tsx db/migrate-owner.ts <clerk-user-id>
+```
+
 ---
 
-## Testing (WIP)
+## Admin Setup
 
-- Unit tests for schemas and helpers
-- API integration tests for core flows
-- End-to-end tests for ingredient & formula CRUD
+1. Create a user account in the app
+2. In the Clerk dashboard, go to **Users → [your user] → Public Metadata** and set:
+   ```json
+   { "role": "admin" }
+   ```
+3. An **Admin** link will appear in the navigation
+4. From `/admin`, use **View as** to impersonate any user
 
 ---
 
 ## Future Improvements
 
+- Custom delete confirmation dialogs (replace browser `confirm()`)
+- Numeric input UX overhaul (research best practice for decimal inputs)
+- Percentage input convention (type `1` for 1%, not `0.01`)
+- User account management page (change password, email, delete account)
+- Formula sharing between users
+- Expanded test coverage (Vitest + Playwright)
 - Import/export of formulas
-- Expanded test coverage
 
 ---
 
