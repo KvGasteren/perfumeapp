@@ -37,7 +37,7 @@ export function ConfirmDialog({
       ref={ref}
       onClick={handleClick}
       onCancel={onCancel}
-      className="rounded-lg border border-neutral-200 bg-white p-6 shadow-lg backdrop:bg-black/30 w-full max-w-sm"
+      className="rounded-lg border border-neutral-200 bg-white p-6 shadow-lg backdrop:bg-black/30 w-full max-w-sm m-auto"
     >
       <h2 className="text-base font-semibold text-neutral-900">{title}</h2>
       {description && (
