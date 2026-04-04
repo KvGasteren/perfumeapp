@@ -10,9 +10,34 @@ export const metadata = {
   description: "Written with love by Koen van Gasterten for Frank Bloem",
 };
 
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#0f172a",
+    colorBackground: "#ffffff",
+    colorInputBackground: "#ffffff",
+    colorInputText: "#0f172a",
+    colorText: "#0f172a",
+    colorTextSecondary: "#6b7280",
+    borderRadius: "0.5rem",
+    fontFamily: "inherit",
+  },
+  elements: {
+    card: "shadow-none border border-neutral-200",
+    headerTitle: "text-xl font-semibold tracking-tight",
+    headerSubtitle: "text-sm text-neutral-500",
+    formButtonPrimary:
+      "bg-slate-950 hover:bg-slate-800 text-sm font-medium rounded-md",
+    footerActionLink: "text-slate-900 font-medium hover:text-slate-700",
+    formFieldInput:
+      "rounded-md border border-neutral-300 bg-white text-sm focus:border-neutral-400",
+    identityPreviewText: "text-sm text-neutral-700",
+    identityPreviewEditButton: "text-slate-900 hover:text-slate-700",
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={clerkAppearance}>
       <html lang="en">
         <body className="min-h-dvh bg-neutral-50 text-neutral-900">
           <ToastProvider>
