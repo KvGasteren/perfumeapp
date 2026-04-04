@@ -29,6 +29,17 @@ export async function getOwnerFilter(): Promise<string | null> {
   return impersonating ?? null;
 }
 
+/**
+ * Like getOwnerFilter but always returns a concrete ID.
+ * Admin not impersonating → falls back to their own ID.
+ * Use this for list pages where showing nothing is confusing.
+ */
+export async function getEffectiveOwnerId(): Promise<string> {
+  const filter = await getOwnerFilter();
+  if (filter !== null) return filter;
+  return getOwnerId();
+}
+
 export async function getImpersonatedUserId(): Promise<string | null> {
   const jar = await cookies();
   return jar.get(IMPERSONATION_COOKIE)?.value ?? null;

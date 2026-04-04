@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getFormulaById, getFormulaIngredients } from "@/lib/data/formulas";
 import { getAllIngredientsForOwner, getIngredientAllergens } from "@/lib/data/ingredients";
-import { getOwnerFilter } from "@/lib/owner";
+import { getOwnerFilter, getEffectiveOwnerId } from "@/lib/owner";
 import { FormulaEditorClient } from "./_client";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function FormulaDetailPage({
   const [formula, ingredientsInFormula, allIngredients] = await Promise.all([
     getFormulaById(formulaId, ownerFilter),
     getFormulaIngredients(formulaId, ownerFilter),
-    ownerFilter ? getAllIngredientsForOwner(ownerFilter) : Promise.resolve([]),
+    getAllIngredientsForOwner(await getEffectiveOwnerId()),
   ]);
 
   if (!formula) notFound();
