@@ -12,7 +12,7 @@ export function fractionToPercent(val: number | string | null | undefined, decim
   if (val == null || val === "") return "";
   const n = typeof val === "string" ? Number(val) : val;
   if (Number.isNaN(n)) return "";
-  return (n * 100).toFixed(decimals);
+  return parseFloat((n * 100).toFixed(decimals)).toString();
 }
 
 /**
@@ -32,8 +32,7 @@ export function percentToFraction(val: string, decimals = 8): string {
  */
 export const formatMax = (val: Allergen["maxConcentration"]) => {
   if (val == null) return "—";
-  const pct = +val * 100;
-  return `${pct.toFixed(6)}%`;
+  return `${parseFloat((+val * 100).toFixed(6))}%`;
 };
 
 export function formatAllergenPreview(
