@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/Input";
 import PageHeader from "@/components/PageHeader";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import { formatMax, fractionToPercent, percentToFraction } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Ingredient = {
   id: number;
@@ -56,6 +57,7 @@ export default function IngredientDetailClient({
   const [draftName, setDraftName] = useState(ingredient.name);
   const [links, setLinks] = useState<AllergenLink[]>(allergens);
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // add-allergen state
   const [allAllergens, setAllAllergens] = useState<AllergenOption[]>([]);
@@ -104,7 +106,6 @@ export default function IngredientDetailClient({
   }
 
   async function deleteIngredient() {
-    if (!confirm("Delete this ingredient?")) return;
     try {
       await Ingredients.remove(ingredient.id);
       push({ title: "Deleted" });
@@ -215,11 +216,19 @@ export default function IngredientDetailClient({
             ) : (
               <Button onClick={() => setEditMode(true)}>Edit</Button>
             )}
-            <Button variant="danger" onClick={deleteIngredient}>
+            <Button variant="danger" onClick={() => setConfirmOpen(true)}>
               Delete
             </Button>
           </div>
         }
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete ingredient"
+        description={`Are you sure you want to delete "${ingredient.name}"? This cannot be undone.`}
+        onConfirm={() => { setConfirmOpen(false); deleteIngredient(); }}
+        onCancel={() => setConfirmOpen(false)}
       />
 
       {/* Name section */}

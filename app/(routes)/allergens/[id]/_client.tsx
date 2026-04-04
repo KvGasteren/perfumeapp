@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import { Allergens } from "@/services/allergens";
 import { fractionToPercent, percentToFraction } from "@/lib/utils";
@@ -44,6 +45,7 @@ export default function AllergenDetailClient({
   );
 
   const [saving, setSaving] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // normalized strings for accurate change detection
   const originalFractionNorm = useMemo(() => {
@@ -93,7 +95,6 @@ export default function AllergenDetailClient({
   }
 
   async function remove() {
-    if (!confirm("Delete this allergen?")) return;
     try {
       await Allergens.remove(allergen.id);
       push({ title: "Deleted" });
@@ -133,11 +134,19 @@ export default function AllergenDetailClient({
             ) : (
               <Button onClick={() => setEditMode(true)}>Edit</Button>
             )}
-            <Button variant="danger" onClick={remove}>
+            <Button variant="danger" onClick={() => setConfirmOpen(true)}>
               Delete
             </Button>
           </div>
         }
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete allergen"
+        description={`Are you sure you want to delete "${allergen.name}"? This cannot be undone.`}
+        onConfirm={() => { setConfirmOpen(false); remove(); }}
+        onCancel={() => setConfirmOpen(false)}
       />
 
       {/* Name */}

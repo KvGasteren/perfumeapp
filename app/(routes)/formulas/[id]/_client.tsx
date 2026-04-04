@@ -15,6 +15,7 @@ import type {
 } from '@/lib/zodSchemas'
 import { useRouter } from 'next/navigation'
 import { formatMax } from '@/lib/utils'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 // helper: fetch allergens for 1 ingredient (still useful for newly added rows)
 async function fetchIngredientAllergens(ingredientId: number) {
@@ -72,6 +73,7 @@ export function FormulaEditorClient({
   const [name, setName] = useState(formula.name)
   const [rows, setRows] = useState<Row[]>(toRows(initialRows))
   const [saving, setSaving] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   // start from server-provided allergen cache
   const [allergenCache, setAllergenCache] = useState<
@@ -235,7 +237,6 @@ export function FormulaEditorClient({
   }
 
   async function handleDeleteFormula() {
-    if (!confirm('Delete this formula?')) return
     try {
       await Formulas.remove(formula.id)
       push({ title: 'Deleted' })
@@ -267,11 +268,19 @@ export function FormulaEditorClient({
             ) : (
               <Button onClick={() => setEditMode(true)}>Edit</Button>
             )}
-            <Button variant="danger" onClick={handleDeleteFormula}>
+            <Button variant="danger" onClick={() => setConfirmOpen(true)}>
               Delete
             </Button>
           </div>
         }
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete formula"
+        description={`Are you sure you want to delete "${formula.name}"? This cannot be undone.`}
+        onConfirm={() => { setConfirmOpen(false); handleDeleteFormula() }}
+        onCancel={() => setConfirmOpen(false)}
       />
 
       {/* formula name */}
