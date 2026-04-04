@@ -1,8 +1,7 @@
 import { db } from "@/db";
 import { allergens, ingredientAllergens } from "@/db/schema";
-import { and, eq, or } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
-const PUBLIC = "public";
 import { NotFoundError, ConflictError } from "./errors";
 
 export async function getAllAllergensAdmin() {
@@ -13,14 +12,14 @@ export async function getAllAllergensAdmin() {
 
 export async function getAllAllergensForOwner(ownerId: string) {
   return db.query.allergens.findMany({
-    where: (a, { or, eq }) => or(eq(a.ownerId, ownerId), eq(a.ownerId, PUBLIC)),
+    where: (a, { eq }) => eq(a.ownerId, ownerId),
     orderBy: (a, { asc }) => [asc(a.name)],
   });
 }
 
 export async function getAllergenById(id: number, ownerId: string | null) {
   const row = await db.query.allergens.findFirst({
-    where: and(eq(allergens.id, id), ownerId ? or(eq(allergens.ownerId, ownerId), eq(allergens.ownerId, PUBLIC)) : undefined),
+    where: and(eq(allergens.id, id), ownerId ? eq(allergens.ownerId, ownerId) : undefined),
   });
   return row ?? null;
 }

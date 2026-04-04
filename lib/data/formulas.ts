@@ -1,8 +1,6 @@
 import { db } from "@/db";
 import { formulas, formulaIngredients, ingredients } from "@/db/schema";
-import { and, eq, or } from "drizzle-orm";
-
-const PUBLIC = "public";
+import { and, eq } from "drizzle-orm";
 import { NotFoundError } from "./errors";
 
 // ── List ──────────────────────────────────────────────────────────────────────
@@ -15,7 +13,7 @@ export async function getAllFormulasAdmin() {
 
 export async function getAllFormulasForOwner(ownerId: string) {
   return db.query.formulas.findMany({
-    where: (f, { or, eq }) => or(eq(f.ownerId, ownerId), eq(f.ownerId, PUBLIC)),
+    where: (f, { eq }) => eq(f.ownerId, ownerId),
     orderBy: (f, { asc }) => [asc(f.name)],
   });
 }
@@ -24,7 +22,7 @@ export async function getAllFormulasForOwner(ownerId: string) {
 
 export async function getFormulaById(id: number, ownerId: string | null) {
   const row = await db.query.formulas.findFirst({
-    where: and(eq(formulas.id, id), ownerId ? or(eq(formulas.ownerId, ownerId), eq(formulas.ownerId, PUBLIC)) : undefined),
+    where: and(eq(formulas.id, id), ownerId ? eq(formulas.ownerId, ownerId) : undefined),
   });
   return row ?? null;
 }
@@ -74,8 +72,8 @@ export async function getFormulaIngredients(formulaId: number, ownerId: string |
     .where(
       and(
         eq(formulaIngredients.formulaId, formulaId),
-        ownerId ? or(eq(formulaIngredients.ownerId, ownerId), eq(formulaIngredients.ownerId, PUBLIC)) : undefined,
-        ownerId ? or(eq(ingredients.ownerId, ownerId), eq(ingredients.ownerId, PUBLIC)) : undefined
+        ownerId ? eq(formulaIngredients.ownerId, ownerId) : undefined,
+        ownerId ? eq(ingredients.ownerId, ownerId) : undefined
       )
     )
     .orderBy(ingredients.name);
