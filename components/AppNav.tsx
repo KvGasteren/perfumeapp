@@ -59,7 +59,18 @@ export function AppNav() {
             </Link>
           </>
         )}
-        <div className="lg:mt-2 lg:border-t lg:border-neutral-100 lg:pt-2 ml-auto lg:ml-0">
+        <div className="lg:mt-2 lg:border-t lg:border-neutral-100 lg:pt-2 ml-auto lg:ml-0 flex flex-row lg:flex-col gap-1">
+          <Link
+            href="/account"
+            className={cn(
+              "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
+              pathname?.startsWith("/account")
+                ? "bg-neutral-900 text-white"
+                : "text-neutral-400 hover:bg-neutral-100"
+            )}
+          >
+            My account
+          </Link>
           <SignOutButton>
             <button className={cn(
               "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition w-full",
