@@ -273,10 +273,8 @@ export default function IngredientDetailClient({
             </select>
              <div className="flex items-center gap-2">
               <Input
-                type="number"
-                step="0.000001"
-                min={0}
-                max={100}
+                type="text"
+                inputMode="decimal"
                 className="w-32"
                 value={newConcentrationPct}
                 onChange={(e) => setNewConcentrationPct(e.target.value)}
@@ -324,10 +322,8 @@ export default function IngredientDetailClient({
                   {editMode ? (
                     <div className="flex items-center gap-2">
                       <Input
-                        type="number"
-                        step="0.000001"
-                        min={0}
-                        max={100}
+                        type="text"
+                        inputMode="decimal"
                         className="w-28"
                         value={uiPct}
                         onChange={(e) => onLinkPercentChange(i, e.target.value)}

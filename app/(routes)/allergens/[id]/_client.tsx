@@ -176,11 +176,8 @@ export default function AllergenDetailClient({
         {editMode ? (
             <div className="flex items-center gap-2">
               <Input
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="0.000001"
-                min={0}
-                max={100}
                 value={maxPercent}
                 onChange={(e) => setMaxPercent(e.target.value)}
                 placeholder="2.00"

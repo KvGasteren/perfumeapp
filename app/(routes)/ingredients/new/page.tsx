@@ -165,10 +165,8 @@ export default function NewIngredientPage() {
               ))}
             </select>
             <Input
-              type="number"
-              step="0.000001"
-              min={0}
-              max={100}
+              type="text"
+              inputMode="decimal"
               className="w-32"
               value={newConcentration}
               onChange={(e) => setNewConcentration(e.target.value)}
@@ -202,10 +200,8 @@ export default function NewIngredientPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Input
-                  type="number"
-                  step="0.000001"
-                  min={0}
-                  max={100}
+                  type="text"
+                  inputMode="decimal"
                   className="w-28"
                   value={(s.concentration * 100).toFixed(2)}
                   onChange={(e) => updateStagedConcentration(i, e.target.value)}

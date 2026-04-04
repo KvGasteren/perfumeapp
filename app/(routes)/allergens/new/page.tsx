@@ -107,10 +107,8 @@ export default function NewAllergenClient() {
             Max concentration
           </label>
           <Input
-            type="number"
-            step="0.000001"
-            min={0}
-            max={100}
+            type="text"
+            inputMode="decimal"
             value={maxConcentration}
             onChange={(e) => setMaxConcentration(e.target.value)}
             placeholder="e.g. 2.00"

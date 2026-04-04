@@ -339,7 +339,8 @@ export function FormulaEditorClient({
 
                   {editMode ? (
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       className="w-full"
                       value={row.parts === '' ? '' : String(row.parts)}
                       onChange={(e) =>
