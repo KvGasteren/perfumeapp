@@ -1,12 +1,13 @@
 import PageHeader from "@/components/PageHeader";
 import { getAllFormulasForOwner } from "@/lib/data/formulas";
-import { getOwnerId } from "@/lib/owner";
+import { getOwnerFilter } from "@/lib/owner";
 import { FormulasClient } from "./_client";
 
 export const dynamic = "force-dynamic";
 
 export default async function FormulasPage() {
-  const items = await getAllFormulasForOwner(await getOwnerId());
+  const ownerId = await getOwnerFilter();
+  const items = await (ownerId ? getAllFormulasForOwner(ownerId) : []);
 
   return (
     <>
