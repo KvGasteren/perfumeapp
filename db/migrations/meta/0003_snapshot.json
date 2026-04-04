@@ -1,6 +1,6 @@
 {
-  "id": "d1997d6e-feea-48d8-adc4-248da380f773",
-  "prevId": "cce4da6f-1313-4e4e-a31d-718ff99ce85f",
+  "id": "0acfd4f5-b66e-446f-9d9a-78382f56d89a",
+  "prevId": "d1997d6e-feea-48d8-adc4-248da380f773",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -35,7 +35,7 @@
         },
         "max_concentration": {
           "name": "max_concentration",
-          "type": "numeric(6, 4)",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": false
         }
@@ -72,7 +72,7 @@
         },
         "parts": {
           "name": "parts",
-          "type": "real",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
@@ -211,7 +211,7 @@
         },
         "concentration": {
           "name": "concentration",
-          "type": "real",
+          "type": "numeric",
           "primaryKey": false,
           "notNull": true
         },
