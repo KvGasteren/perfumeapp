@@ -63,7 +63,7 @@ export async function getFormulaIngredients(formulaId: number, ownerId: string |
   });
   if (!formula) throw new NotFoundError("Formula not found");
 
-  return db
+  const rows = await db
     .select({
       ingredientId: ingredients.id,
       ingredientName: ingredients.name,
@@ -79,6 +79,7 @@ export async function getFormulaIngredients(formulaId: number, ownerId: string |
       )
     )
     .orderBy(ingredients.name);
+  return rows.map((r) => ({ ...r, parts: Number(r.parts) }));
 }
 
 export async function upsertFormulaIngredient(
@@ -104,14 +105,14 @@ export async function upsertFormulaIngredient(
 
   const [row] = await db
     .insert(formulaIngredients)
-    .values({ formulaId, ingredientId, parts, ownerId: effectiveOwnerId })
+    .values({ formulaId, ingredientId, parts: String(parts), ownerId: effectiveOwnerId })
     .onConflictDoUpdate({
       target: [formulaIngredients.formulaId, formulaIngredients.ingredientId, formulaIngredients.ownerId],
-      set: { parts },
+      set: { parts: String(parts) },
     })
     .returning();
 
-  return { ingredientId: row.ingredientId, ingredientName: ing.name, parts: row.parts };
+  return { ingredientId: row.ingredientId, ingredientName: ing.name, parts: Number(row.parts) };
 }
 
 export async function deleteFormulaIngredient(

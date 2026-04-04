@@ -115,49 +115,49 @@ async function main() {
     {
       ingredientId: ingByName.get("Bergamot")!.id,
       allergenId: allByName.get("Limonene")!.id,
-      concentration: 0.25,
+      concentration: "0.25",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Bergamot")!.id,
       allergenId: allByName.get("Linalool")!.id,
-      concentration: 0.05,
+      concentration: "0.05",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Orange Sweet")!.id,
       allergenId: allByName.get("Limonene")!.id,
-      concentration: 0.3,
+      concentration: "0.3",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Lavender")!.id,
       allergenId: allByName.get("Linalool")!.id,
-      concentration: 0.02,
+      concentration: "0.02",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Rose Absolute")!.id,
       allergenId: allByName.get("Citronellol")!.id,
-      concentration: 0.015,
+      concentration: "0.015",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Ylang Ylang")!.id,
       allergenId: allByName.get("Benzyl benzoate")!.id,
-      concentration: 0.01,
+      concentration: "0.01",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Jasmine Sambac")!.id,
       allergenId: allByName.get("Benzyl alcohol")!.id,
-      concentration: 0.008,
+      concentration: "0.008",
       ownerId: OWNER,
     },
     {
       ingredientId: ingByName.get("Sandalwood")!.id,
       allergenId: allByName.get("Eugenol")!.id,
-      concentration: 0.01,
+      concentration: "0.01",
       ownerId: OWNER,
     },
   ]);
@@ -180,25 +180,25 @@ async function main() {
     {
       formulaId: fByName.get("Citrus Prelude")!.id,
       ingredientId: ingByName.get("Bergamot")!.id,
-      parts: 40,
+      parts: "40",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Citrus Prelude")!.id,
       ingredientId: ingByName.get("Orange Sweet")!.id,
-      parts: 30,
+      parts: "30",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Citrus Prelude")!.id,
       ingredientId: ingByName.get("Lavender")!.id,
-      parts: 10,
+      parts: "10",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Citrus Prelude")!.id,
       ingredientId: ingByName.get("Vanillin")!.id,
-      parts: 5,
+      parts: "5",
       ownerId: OWNER,
     },
 
@@ -206,19 +206,19 @@ async function main() {
     {
       formulaId: fByName.get("Rose Velvet")!.id,
       ingredientId: ingByName.get("Rose Absolute")!.id,
-      parts: 35,
+      parts: "35",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Rose Velvet")!.id,
       ingredientId: ingByName.get("Ylang Ylang")!.id,
-      parts: 15,
+      parts: "15",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Rose Velvet")!.id,
       ingredientId: ingByName.get("Sandalwood")!.id,
-      parts: 10,
+      parts: "10",
       ownerId: OWNER,
     },
 
@@ -226,19 +226,19 @@ async function main() {
     {
       formulaId: fByName.get("Woodland Whisper")!.id,
       ingredientId: ingByName.get("Cedarwood Atlas")!.id,
-      parts: 25,
+      parts: "25",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Woodland Whisper")!.id,
       ingredientId: ingByName.get("Patchouli")!.id,
-      parts: 20,
+      parts: "20",
       ownerId: OWNER,
     },
     {
       formulaId: fByName.get("Woodland Whisper")!.id,
       ingredientId: ingByName.get("Jasmine Sambac")!.id,
-      parts: 15,
+      parts: "15",
       ownerId: OWNER,
     },
   ]);

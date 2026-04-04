@@ -40,7 +40,7 @@ export async function getIngredientsWithAllergenSummary(ownerId: string): Promis
     const bucket = byIngredient.get(link.ingredientId);
     if (!bucket) continue;
 
-    const concentration = link.concentration ?? 0;
+    const concentration = Number(link.concentration ?? 0);
     bucket.allergenCount += 1;
 
     const current = bucket.topAllergens;
@@ -112,7 +112,7 @@ export async function deleteIngredient(id: number, ownerId: string | null) {
 // ── Allergen links ────────────────────────────────────────────────────────────
 
 export async function getIngredientAllergens(ingredientId: number, ownerId: string | null) {
-  return db
+  const rows = await db
     .select({
       allergenId: allergens.id,
       allergenName: allergens.name,
@@ -130,6 +130,7 @@ export async function getIngredientAllergens(ingredientId: number, ownerId: stri
       )
     )
     .orderBy(allergens.name);
+  return rows.map((r) => ({ ...r, concentration: Number(r.concentration) }));
 }
 
 export async function upsertIngredientAllergen(
@@ -155,14 +156,14 @@ export async function upsertIngredientAllergen(
 
   const [row] = await db
     .insert(ingredientAllergens)
-    .values({ ingredientId, allergenId, concentration, ownerId: effectiveOwnerId })
+    .values({ ingredientId, allergenId, concentration: String(concentration), ownerId: effectiveOwnerId })
     .onConflictDoUpdate({
       target: [ingredientAllergens.ingredientId, ingredientAllergens.allergenId],
-      set: { concentration },
+      set: { concentration: String(concentration) },
     })
     .returning();
 
-  return { allergenId: row.allergenId, allergenName: all.name, concentration: row.concentration };
+  return { allergenId: row.allergenId, allergenName: all.name, concentration: Number(row.concentration) };
 }
 
 export async function deleteIngredientAllergen(
