@@ -132,3 +132,29 @@
     box-shadow: 0 0 0 3px rgba(163, 163, 163, 0.15);
   }
 }
+
+/* Clerk UserProfile overrides */
+.cl-navbar,
+[class*="cl-navbar"] {
+  background: white !important;
+  background-image: none !important;
+}
+
+.cl-card,
+[class*="cl-card"] {
+  box-shadow: none !important;
+}
+
+.cl-avatarBox,
+[class*="cl-avatarBox"] {
+  background-color: #f5f5f5 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E") !important;
+  background-size: 65% !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+.cl-avatarBox img,
+[class*="cl-avatarBox"] img {
+  display: none !important;
+}
