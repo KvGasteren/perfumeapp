@@ -9,24 +9,10 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/toast/ToastProvider";
 import { Allergens } from "@/services/allergens";
+import { fractionToPercent, percentToFraction } from "@/lib/utils";
 
-
-// --- helpers: percent <-> fraction and formatting ---
-function toPercentStringFromFraction(frac: string | number | null | undefined, decimals = 4) {
-  if (frac == null || frac === "") return "";
-  const n = typeof frac === "string" ? Number(frac) : frac;
-  if (Number.isNaN(n)) return "";
-  return (n * 100).toFixed(decimals); // string
-}
-
-function toFractionStringFromPercent(pctStr: string, decimals = 6) {
-  const n = Number(pctStr);
-  if (pctStr.trim() === "" || Number.isNaN(n)) return "";
-  return (n / 100).toFixed(decimals); // string
-}
-
-function formatPercentFromFraction(frac: string | number | null | undefined, decimals = 4) {
-  const s = toPercentStringFromFraction(frac, decimals);
+function formatPercentFromFraction(frac: string | number | null | undefined) {
+  const s = fractionToPercent(frac);
   return s === "" ? "—" : `${s}%`;
 }
 
@@ -54,7 +40,7 @@ export default function AllergenDetailClient({
   const [name, setName] = useState(allergen.name);
   const [casNumber, setCasNumber] = useState(allergen.casNumber ?? "");
   const [maxPercent, setMaxPercent] = useState(
-    toPercentStringFromFraction(allergen.maxConcentration ?? "", 4)
+    fractionToPercent(allergen.maxConcentration ?? "")
   );
 
   const [saving, setSaving] = useState(false);
@@ -66,7 +52,7 @@ export default function AllergenDetailClient({
   }, [allergen.maxConcentration]);
 
   const currentFractionNorm = useMemo(() => {
-    const s = toFractionStringFromPercent(maxPercent, 6);
+    const s = percentToFraction(maxPercent);
     return s === "" ? "" : Number(s).toFixed(6);
   }, [maxPercent]);
 
@@ -86,7 +72,7 @@ export default function AllergenDetailClient({
     setSaving(true);
     try {
       // convert percent (UI) -> fraction string for backend
-      const fractionStr = toFractionStringFromPercent(maxPercent, 6);
+      const fractionStr = percentToFraction(maxPercent);
 
       const payload: Record<string, unknown> = {
         name: name.trim(),
@@ -121,7 +107,7 @@ export default function AllergenDetailClient({
   function cancel() {
     setName(allergen.name);
     setCasNumber(allergen.casNumber ?? "");
-    setMaxPercent(toPercentStringFromFraction(allergen.maxConcentration ?? "", 4));
+    setMaxPercent(fractionToPercent(allergen.maxConcentration ?? ""));
     setEditMode(false);
   }
 
@@ -203,7 +189,7 @@ export default function AllergenDetailClient({
             </div>
         ) : (
           <p className="text-sm text-neutral-900">
-            {formatPercentFromFraction(allergen.maxConcentration, 4)}
+            {formatPercentFromFraction(allergen.maxConcentration)}
           </p>
         )}
       </section>

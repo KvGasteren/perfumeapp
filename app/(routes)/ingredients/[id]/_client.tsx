@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import PageHeader from "@/components/PageHeader";
 import { useToast } from "@/components/ui/toast/ToastProvider";
-import { formatMax } from "@/lib/utils";
+import { formatMax, fractionToPercent, percentToFraction } from "@/lib/utils";
 
 type Ingredient = {
   id: number;
@@ -34,23 +34,8 @@ type AllergenOption = {
   maxConcentration?: string | null;
 };
 
-// ---- helpers: percent <-> fraction + formatting ----
-function fractionToPercentString(val: number | string | null | undefined, decimals = 4) {
-  if (val == null || val === "") return "";
-  const n = typeof val === "string" ? Number(val) : val;
-  if (Number.isNaN(n)) return "";
-  return (n * 100).toFixed(decimals); // e.g. 0.02 -> "2.0000"
-}
-
-function percentStringToFraction(val: string, decimals = 6) {
-  if (val.trim() === "") return "";
-  const n = Number(val);
-  if (Number.isNaN(n)) return "";
-  return (n / 100).toFixed(decimals); // string precise for backend
-}
-
-function formatPercent(val: number | string | null | undefined, decimals = 4) {
-  const s = fractionToPercentString(val, decimals);
+function formatPercent(val: number | string | null | undefined) {
+  const s = fractionToPercent(val);
   return s === "" ? "—" : `${s}%`;
 }
 
@@ -134,7 +119,7 @@ export default function IngredientDetailClient({
     if (!editMode) return;
 
     // Convert percent string -> fraction number for state
-    const fracStr = percentStringToFraction(pctStr, 6);
+    const fracStr = percentToFraction(pctStr);
     const fracNum = fracStr === "" ? 0 : Number(fracStr);
 
     const next = { ...links[idx], concentration: fracNum };
@@ -175,7 +160,7 @@ export default function IngredientDetailClient({
     if (!editMode) return;
     if (newAllergenId === "") return;
     
-    const fracStr = percentStringToFraction(newConcentrationPct, 6);
+    const fracStr = percentToFraction(newConcentrationPct);
     const fracNum = fracStr === "" ? 0 : Number(fracStr);
 
     try {
@@ -313,7 +298,7 @@ export default function IngredientDetailClient({
             const displayName =
               l.allergenName ?? l.name ?? `Allergen #${l.allergenId}`; // fallback so we always show something
 
-            const uiPct = fractionToPercentString(l.concentration, 4);
+            const uiPct = fractionToPercent(l.concentration);
 
             return (
               <div

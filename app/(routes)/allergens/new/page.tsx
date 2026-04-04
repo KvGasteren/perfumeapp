@@ -35,8 +35,8 @@ export default function NewAllergenClient() {
 
       const max = maxConcentration.trim();
       if (max !== "") {
-        // user enters 0.0200 for 2%
-        payload.maxConcentration = Number(max);
+        // user enters 2 for 2%; convert to fraction for storage
+        payload.maxConcentration = Number(max) / 100;
       }
 
       const res = await fetch("/api/allergens", {
@@ -107,13 +107,15 @@ export default function NewAllergenClient() {
           </label>
           <Input
             type="number"
-            step="0.0001"
+            step="0.01"
+            min={0}
+            max={100}
             value={maxConcentration}
             onChange={(e) => setMaxConcentration(e.target.value)}
-            placeholder="e.g. 0.0200"
+            placeholder="e.g. 2.00"
           />
-          <p className="mt-1 text-xs text-red-500">
-            Store concentration as a decimal fraction (e.g. <code>0.0200</code> = 2%)
+          <p className="mt-1 text-xs text-neutral-400">
+            Enter as a percentage (e.g. <code>2</code> = 2%)
           </p>
         </div>
 

@@ -86,7 +86,8 @@ export default function NewIngredientPage() {
   function addAllergen() {
     if (newAllergenId === "") return;
     const info = allAllergens.find((a) => a.id === newAllergenId);
-    const conc = Number(newConcentration) || 0;
+    // user enters percentage (e.g. 2 for 2%); store as fraction
+    const conc = (Number(newConcentration) || 0) / 100;
     setStagedAllergens((prev) => [
       ...prev,
       {
@@ -103,7 +104,8 @@ export default function NewIngredientPage() {
   }
 
   function updateStagedConcentration(idx: number, value: string) {
-    const num = Number(value);
+    // user enters percentage; store as fraction
+    const num = Number(value) / 100;
     setStagedAllergens((prev) =>
       prev.map((item, i) =>
         i === idx ? { ...item, concentration: num } : item
@@ -138,9 +140,8 @@ export default function NewIngredientPage() {
           </Button>
         </div>
         {(stagedAllergens.length > 0 || adding) && (
-        <p className="mb-3 text-xs text-red-500 text-right">
-          Store concentration as a decimal fraction (e.g. <code>0.0200</code> =
-          2%)
+        <p className="mb-3 text-xs text-neutral-400 text-right">
+          Enter concentration as a percentage (e.g. <code>2</code> = 2%)
         </p>
         )}
         {adding ? (
@@ -165,10 +166,12 @@ export default function NewIngredientPage() {
             <Input
               type="number"
               step="0.01"
+              min={0}
+              max={100}
               className="w-32"
               value={newConcentration}
               onChange={(e) => setNewConcentration(e.target.value)}
-              placeholder="conc."
+              placeholder="% e.g. 2"
             />
             <Button
               onClick={addAllergen}
@@ -200,8 +203,10 @@ export default function NewIngredientPage() {
                 <Input
                   type="number"
                   step="0.01"
+                  min={0}
+                  max={100}
                   className="w-28"
-                  value={String(s.concentration)}
+                  value={(s.concentration * 100).toFixed(2)}
                   onChange={(e) => updateStagedConcentration(i, e.target.value)}
                 />
                 <Button variant="ghost" onClick={() => removeStaged(i)}>
