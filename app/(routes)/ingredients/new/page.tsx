@@ -165,7 +165,7 @@ export default function NewIngredientPage() {
             </select>
             <Input
               type="number"
-              step="0.01"
+              step="0.000001"
               min={0}
               max={100}
               className="w-32"
@@ -202,7 +202,7 @@ export default function NewIngredientPage() {
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
-                  step="0.01"
+                  step="0.000001"
                   min={0}
                   max={100}
                   className="w-28"

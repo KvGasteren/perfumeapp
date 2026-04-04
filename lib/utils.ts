@@ -8,7 +8,7 @@ export function cn(...vals: Array<string | undefined | false | null>) {
  * Convert a stored fraction (0.02) to a percentage string for display in inputs.
  * e.g. fractionToPercent(0.02) → "2.00"
  */
-export function fractionToPercent(val: number | string | null | undefined, decimals = 2): string {
+export function fractionToPercent(val: number | string | null | undefined, decimals = 6): string {
   if (val == null || val === "") return "";
   const n = typeof val === "string" ? Number(val) : val;
   if (Number.isNaN(n)) return "";
@@ -19,7 +19,7 @@ export function fractionToPercent(val: number | string | null | undefined, decim
  * Convert a percentage string from an input (e.g. "2") to a fraction string for the backend.
  * e.g. percentToFraction("2") → "0.020000"
  */
-export function percentToFraction(val: string, decimals = 6): string {
+export function percentToFraction(val: string, decimals = 8): string {
   if (val.trim() === "") return "";
   const n = Number(val);
   if (Number.isNaN(n)) return "";

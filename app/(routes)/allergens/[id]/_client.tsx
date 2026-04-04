@@ -178,7 +178,7 @@ export default function AllergenDetailClient({
               <Input
                 type="number"
                 inputMode="decimal"
-                step="0.01"
+                step="0.000001"
                 min={0}
                 max={100}
                 value={maxPercent}
