@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import PageHeader from "@/components/PageHeader";
 import { useToast } from "@/components/ui/toast/ToastProvider";
+import { percentToFraction } from "@/lib/utils";
 
 export default function NewAllergenClient() {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function NewAllergenClient() {
       const payload: {
         name: string;
         casNumber?: string | null;
-        maxConcentration?: number | null;
+        maxConcentration?: string | number | null;
       } = {
         name: name.trim(),
       };
@@ -35,8 +36,8 @@ export default function NewAllergenClient() {
 
       const max = maxConcentration.trim();
       if (max !== "") {
-        // user enters 2 for 2%; convert to fraction for storage
-        payload.maxConcentration = Number(max) / 100;
+        // user enters 2 for 2%; convert to fraction string for storage
+        payload.maxConcentration = percentToFraction(max);
       }
 
       const res = await fetch("/api/allergens", {

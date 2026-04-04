@@ -33,7 +33,7 @@ export function percentToFraction(val: string, decimals = 8): string {
 export const formatMax = (val: Allergen["maxConcentration"]) => {
   if (val == null) return "—";
   const pct = +val * 100;
-  return `${pct.toFixed(2)}%`;
+  return `${pct.toFixed(6)}%`;
 };
 
 export function formatAllergenPreview(

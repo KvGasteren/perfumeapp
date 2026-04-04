@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Ingredients } from "@/services/ingredients";
 import { useToast } from "@/components/ui/toast/ToastProvider";
+import { percentToFraction } from "@/lib/utils";
 
 type AllergenOption = {
   id: number;
@@ -87,7 +88,7 @@ export default function NewIngredientPage() {
     if (newAllergenId === "") return;
     const info = allAllergens.find((a) => a.id === newAllergenId);
     // user enters percentage (e.g. 2 for 2%); store as fraction
-    const conc = (Number(newConcentration) || 0) / 100;
+    const conc = Number(percentToFraction(newConcentration) || "0");
     setStagedAllergens((prev) => [
       ...prev,
       {
@@ -105,7 +106,7 @@ export default function NewIngredientPage() {
 
   function updateStagedConcentration(idx: number, value: string) {
     // user enters percentage; store as fraction
-    const num = Number(value) / 100;
+    const num = Number(percentToFraction(value) || "0");
     setStagedAllergens((prev) =>
       prev.map((item, i) =>
         i === idx ? { ...item, concentration: num } : item
