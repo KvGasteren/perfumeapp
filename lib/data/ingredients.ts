@@ -24,7 +24,7 @@ export async function getIngredientsWithAllergenSummary(ownerId: string): Promis
       allergenName: allergens.name,
     })
     .from(ingredientAllergens)
-    .leftJoin(allergens, eq(ingredientAllergens.allergenId, allergens.id))
+    .innerJoin(allergens, eq(ingredientAllergens.allergenId, allergens.id))
     .where(eq(ingredientAllergens.ownerId, ownerId));
 
   const byIngredient = new Map<number, IngredientWithAllergenSummary>();

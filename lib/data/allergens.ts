@@ -33,6 +33,12 @@ export async function createAllergen(
   data: { name: string; casNumber?: string | null; maxConcentration?: string | number | null },
   ownerId: string
 ) {
+  const existing = await db.query.allergens.findFirst({
+    where: and(eq(allergens.name, data.name), eq(allergens.ownerId, ownerId)),
+    columns: { id: true },
+  });
+  if (existing) throw new ConflictError(`An allergen named "${data.name}" already exists.`);
+
   const [row] = await db
     .insert(allergens)
     .values({ ...data, maxConcentration: toNumericString(data.maxConcentration), ownerId })
