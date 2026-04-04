@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -59,6 +59,16 @@ export function AppNav() {
             </Link>
           </>
         )}
+        <div className="lg:mt-2 lg:border-t lg:border-neutral-100 lg:pt-2 ml-auto lg:ml-0">
+          <SignOutButton>
+            <button className={cn(
+              "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition w-full",
+              "text-neutral-400 hover:bg-neutral-100"
+            )}>
+              Sign out
+            </button>
+          </SignOutButton>
+        </div>
       </div>
     </aside>
   );
