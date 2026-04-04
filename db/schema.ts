@@ -2,7 +2,6 @@ import {
   pgTable,
   serial,
   integer,
-  real,
   text,
   timestamp,
   primaryKey,
@@ -22,7 +21,7 @@ export const allergens = pgTable("allergen", {
   name: text("name").notNull(),
   ownerId: text("owner_id").notNull().default("public"),
   casNumber: text("cas_number"),
-  maxConcentration: numeric("max_concentration", { precision: 6, scale: 4 }),
+  maxConcentration: numeric("max_concentration"),
 });
 
 export const ingredientAllergens = pgTable(
@@ -30,7 +29,7 @@ export const ingredientAllergens = pgTable(
   {
     ingredientId: integer("ingredient_id").notNull(),
     allergenId: integer("allergen_id").notNull(),
-    concentration: real("concentration").notNull(),
+    concentration: numeric("concentration").notNull(),
     ownerId: text("owner_id").notNull().default("public"),
   },
   (t) => [primaryKey({ columns: [t.ingredientId, t.allergenId] })]
@@ -50,7 +49,7 @@ export const formulaIngredients = pgTable(
     id: serial("id").primaryKey(),
     formulaId: integer("formula_id").notNull().references(() => formulas.id, { onDelete: 'cascade', onUpdate: 'cascade'}),
     ingredientId: integer("ingredient_id").notNull().references(() => ingredients.id, { onDelete: 'restrict', onUpdate: 'cascade'}),
-    parts: real("parts").notNull(),
+    parts: numeric("parts").notNull(),
     ownerId: text("owner_id").notNull().default("public"),
   },
   (t) => [
